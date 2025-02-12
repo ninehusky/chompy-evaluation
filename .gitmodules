@@ -1,0 +1,6 @@
+[submodule "ruler"]
+	path = ruler
+	url = git@github.com:ninehusky/ruler.git
+[submodule "caviar"]
+	path = caviar
+	url = git@github.com:ninehusky/caviar.git
