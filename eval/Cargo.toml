@@ -1,0 +1,9 @@
+[package]
+name = "eval"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ruler = { git = "https://github.com/ninehusky/chompy.git" }
+caviar = { git = "https://github.com/ninehusky/caviar.git" }
+
