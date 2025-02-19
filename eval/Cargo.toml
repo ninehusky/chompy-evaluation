@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+clap = { version = "4.5.30", features = ["derive"] }
+
 ruler = { git = "https://github.com/ninehusky/chompy.git" }
 caviar = { git = "https://github.com/ninehusky/caviar.git" }
 
