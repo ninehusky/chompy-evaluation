@@ -1,0 +1,3 @@
+[submodule "caviar"]
+	path = caviar
+	url = git@github.com:ninehusky/caviar.git
