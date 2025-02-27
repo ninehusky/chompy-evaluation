@@ -1,13 +1,14 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, str::FromStr};
 
 use caviar::structs::{Ruleset, RulesetTag};
-use ruler::enumo::Sexp;
+use ruler::{enumo::Sexp, halide::Pred};
 
 use clap::Parser;
 
 enum EvalMode {
     CaviarComparison,
     RulesetComparison,
+    Verify,
 }
 
 impl From<String> for EvalMode {
@@ -15,6 +16,7 @@ impl From<String> for EvalMode {
         match s.as_str() {
             "caviar" => EvalMode::CaviarComparison,
             "ruleset" => EvalMode::RulesetComparison,
+            "verify" => EvalMode::Verify,
             _ => panic!("Invalid mode: {}", s),
         }
     }
@@ -40,14 +42,28 @@ fn main() {
         EvalMode::RulesetComparison => {
             println!("Ruleset comparison");
         }
+        EvalMode::Verify => {
+            let dataset_path = args.dataset_path.unwrap();
+            verify_expressions(dataset_path);
+        }
     }
+}
+
+fn verify_expressions(path: PathBuf) -> Vec<ruler::ValidationResult> {
+    let mut results = Vec::new();
+    let expressions = caviar::io::reader::read_expressions(&path.into());
+    for r in expressions.unwrap().iter() {
+        let halide_expr = r.expression.clone();
+        let res = ruler::halide::validate_expression(&Sexp::from_str(&halide_expr).unwrap());
+        println!("Validation result: {:?}", res);
+        results.push(res);
+    }
+    results
 }
 
 fn caviar_comparison(path: PathBuf) {
     // get the expression first.
     let results = caviar::io::reader::read_expressions(&path.into());
-    let caviar_rules: Ruleset = Ruleset::new(RulesetTag::CaviarAll);
-    let chompy_rules: Ruleset = Ruleset::new(RulesetTag::Chompy);
     for res in results.unwrap().iter() {
         println!("consider expression: {:?}", res);
         // let res = caviar::trs::prove_expression
