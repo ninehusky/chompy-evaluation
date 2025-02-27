@@ -1,3 +1,6 @@
 [submodule "caviar"]
 	path = caviar
 	url = git@github.com:ninehusky/caviar.git
+[submodule "chompy"]
+	path = chompy
+	url = git@github.com:ninehusky/chompy.git
