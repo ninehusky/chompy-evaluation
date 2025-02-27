@@ -1,7 +1,7 @@
 use std::{path::PathBuf, str::FromStr};
 
 use caviar::structs::{ResultStructure, Ruleset, RulesetTag};
-use ruler::{enumo::Sexp, halide::Pred, ValidationResult};
+use ruler::{enumo::Sexp, ValidationResult};
 
 use clap::Parser;
 
@@ -32,6 +32,9 @@ struct CLIArgs {
 
     #[arg(long, value_name = "FILE")]
     chompy_ruleset_path: Option<PathBuf>,
+
+    #[arg(long, value_name = "FILE")]
+    output_path: Option<PathBuf>,
 }
 
 #[derive(Debug)]
@@ -49,7 +52,12 @@ fn main() {
         EvalMode::CaviarComparison => {
             let dataset_path = args.dataset_path.unwrap();
             let chompy_ruleset_path = args.chompy_ruleset_path.unwrap();
-            caviar_comparison(dataset_path, chompy_ruleset_path);
+            let output_path = args.output_path.unwrap();
+            let chompy_ruleset = Ruleset::new(RulesetTag::Custom(
+                chompy_ruleset_path.to_str().unwrap().to_string(),
+            ));
+            let results = caviar_comparison(dataset_path, chompy_ruleset_path, &chompy_ruleset);
+            write_chompy_caviar_results_to_json(output_path, &chompy_ruleset, &results);
         }
         EvalMode::RulesetComparison => {
             println!("Ruleset comparison");
@@ -75,21 +83,19 @@ fn verify_expressions(path: PathBuf) -> Vec<ruler::ValidationResult> {
 
 fn caviar_comparison(
     expr_path: PathBuf,
-    chompy_ruleset_path: PathBuf,
+    output_path: PathBuf,
+    chompy_ruleset: &Ruleset,
 ) -> Vec<RulesetComparisonResult> {
     let mut results: Vec<RulesetComparisonResult> = Vec::new();
     let exprs = caviar::io::reader::read_expressions(&expr_path.into());
     let caviar_ruleset = Ruleset::new(RulesetTag::CaviarAll);
-    let chompy_ruleset = Ruleset::new(RulesetTag::Custom(
-        chompy_ruleset_path.to_str().unwrap().to_string(),
-    ));
     let default_limits = (100000, 100000, 3.0);
-    for expr_struct in exprs.unwrap().iter() {
+    for expr_struct in exprs.unwrap().iter().take(100) {
         let caviar_res = caviar::trs::prove_pulses_npp(
             expr_struct.index,
             &expr_struct.expression,
             &caviar_ruleset,
-            3.0,
+            0.01,
             default_limits,
             true,
             false,
@@ -98,16 +104,11 @@ fn caviar_comparison(
             expr_struct.index,
             &expr_struct.expression,
             &chompy_ruleset,
-            3.0,
+            0.01,
             default_limits,
             true,
             false,
         );
-        // let z3_res =
-        //     match ruler::halide::validate_expression(&Sexp::from_str(&expr_struct.expression).unwrap()) {
-        //         ValidationResult::Valid => "false"
-        //         ValidationResult::Invalid =>
-        //  };
 
         let res = RulesetComparisonResult {
             expression: expr_struct.expression.clone(),
@@ -120,5 +121,40 @@ fn caviar_comparison(
         println!("res {:#?}", res);
         results.push(res);
     }
+
     results
+}
+
+fn write_chompy_caviar_results_to_json(
+    output_path: PathBuf,
+    chompy_ruleset: &Ruleset,
+    results: &Vec<RulesetComparisonResult>,
+) {
+    let validation_result_to_string = |res: &ValidationResult| match res {
+        ValidationResult::Valid => "valid",
+        ValidationResult::Invalid => "invalid",
+        ValidationResult::Unknown => "unknown",
+    };
+    let ruleset_strings: Vec<String> = chompy_ruleset
+        .rules()
+        .iter()
+        .map(|r| r.name().to_string())
+        .collect();
+    let ruleset_json = serde_json::json!(ruleset_strings);
+    let results_json = results
+        .iter()
+        .map(|r| {
+            serde_json::json!({
+                "expression": r.expression,
+                "chompy_result": r.chompy_result,
+                "caviar_result": r.caviar_result,
+                "z3_result": validation_result_to_string(&r.z3_result),
+            })
+        })
+        .collect::<Vec<serde_json::Value>>();
+    let json = serde_json::json!({
+        "ruleset": ruleset_json,
+        "results": results_json,
+    });
+    std::fs::write(output_path, json.to_string()).unwrap();
 }
