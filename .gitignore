@@ -4,4 +4,4 @@ eval/target
 
 Cargo.lock
 
-
+.z3-trace
