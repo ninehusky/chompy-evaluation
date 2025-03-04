@@ -90,7 +90,7 @@ fn caviar_comparison(
     let exprs = caviar::io::reader::read_expressions(&expr_path.into());
     let caviar_ruleset = Ruleset::new(RulesetTag::CaviarAll);
     let default_limits = (100000, 100000, 3.0);
-    for expr_struct in exprs.unwrap().iter().take(100) {
+    for expr_struct in exprs.unwrap().iter().take(5000) {
         let caviar_res = caviar::trs::prove_pulses_npp(
             expr_struct.index,
             &expr_struct.expression,

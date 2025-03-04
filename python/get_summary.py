@@ -13,13 +13,12 @@ if __name__ == '__main__':
         chompy_successes = 0
         caviar_successes = 0
         for result in json_data['results']:
-            print(f"expression: {result['expression']}")
-            print(f"Chompy result: {result['chompy_result']['stop_reason']}")
-            print(f"Caviar result: {result['caviar_result']['stop_reason']}")
-            if 'Matched' in result['chompy_result']['stop_reason']:
+            chompy_stop_reason = result['chompy_result']['stop_reason']
+            caviar_stop_reason = result['caviar_result']['stop_reason']
+            if 'Matched' in chompy_stop_reason or 'Impossible' in chompy_stop_reason:
                 chompy_successes += 1
 
-            if 'Matched' in result['caviar_result']['stop_reason']:
+            if 'Matched' in caviar_stop_reason or 'Impossible' in caviar_stop_reason:
                 caviar_successes += 1
 
         print(f"Chompy successes: {chompy_successes}")
