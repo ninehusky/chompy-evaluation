@@ -7,7 +7,7 @@ use clap::Parser;
 
 enum EvalMode {
     CaviarComparison,
-    RulesetComparison,
+    DerivabilityComparison,
     Verify,
 }
 
@@ -16,6 +16,7 @@ impl From<String> for EvalMode {
         match s.as_str() {
             "caviar" => EvalMode::CaviarComparison,
             "ruleset" => EvalMode::RulesetComparison,
+            "derivability" => EvalMode::DerivabilityComparison,
             "verify" => EvalMode::Verify,
             _ => panic!("Invalid mode: {}", s),
         }
@@ -32,6 +33,9 @@ struct CLIArgs {
 
     #[arg(long, value_name = "FILE")]
     chompy_ruleset_path: Option<PathBuf>,
+
+    #[arg(long, value_name = "FILE")]
+    other_ruleset_path: Option<PathBuf>,
 
     #[arg(long, value_name = "FILE")]
     output_path: Option<PathBuf>,
@@ -59,8 +63,8 @@ fn main() {
             let results = caviar_comparison(dataset_path, chompy_ruleset_path, &chompy_ruleset);
             write_chompy_caviar_results_to_json(output_path, &chompy_ruleset, &results);
         }
-        EvalMode::RulesetComparison => {
-            println!("Ruleset comparison");
+        EvalMode::DerivabilityComparison => {
+            todo!("Derivability comparison not implemented yet");
         }
         EvalMode::Verify => {
             let dataset_path = args.dataset_path.unwrap();
