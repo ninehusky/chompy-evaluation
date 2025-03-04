@@ -15,7 +15,6 @@ impl From<String> for EvalMode {
     fn from(s: String) -> Self {
         match s.as_str() {
             "caviar" => EvalMode::CaviarComparison,
-            "ruleset" => EvalMode::RulesetComparison,
             "derivability" => EvalMode::DerivabilityComparison,
             "verify" => EvalMode::Verify,
             _ => panic!("Invalid mode: {}", s),
