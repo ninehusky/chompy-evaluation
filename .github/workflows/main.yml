@@ -50,13 +50,27 @@ jobs:
       - name: Run Caviar vs. Chompy comparison
         run: |
           cd eval/
-          cargo run --release -- --eval-mode caviar --dataset-path ../../caviar/data/prefix/evaluation.csv --chompy-ruleset-path ../chompy/chompy-rules.txt --output-path eval.json
+          cargo run --release -- --eval-mode caviar --dataset-path ../../caviar/data/prefix/evaluation.csv --chompy-ruleset-path ../chompy/chompy-rules.txt --ruleset-comparison-output-path eval.json
 
       - name: Upload Caviar vs. Chompy results
         uses: actions/upload-artifact@v4
         with:
           name: eval
           path: eval/eval.json
+
+      - name: Get eggsplanations
+        run: |
+          cd eval/
+          cargo run --release -- --eval-mode eggsplain --dataset-path ../../caviar/data/prefix/evaluation.csv  --chompy-ruleset-path ../chompy/chompy-rules.txt --explanation-output-path ./eggsplain.json
+
+      - name: Upload eggsplanations
+        uses: actions/upload-artifact@v4
+        with:
+          name: eggsplain
+          path: eval/eggsplain.json
+
+
+
 
 
 
