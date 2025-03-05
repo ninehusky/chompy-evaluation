@@ -41,12 +41,18 @@ jobs:
           name: flamegraph
           path: chompy/flamegraph.svg
 
+      - name: Upload Chompy Rules
+        uses: actions/upload-artifact@v4
+        with:
+          name: chompy-rules
+          path: chompy/chompy-rules.txt
+
       - name: Run Caviar vs. Chompy comparison
         run: |
           cd eval/
           cargo run --release -- --eval-mode caviar --dataset-path ../../caviar/data/prefix/evaluation.csv --chompy-rules ../chompy/chompy-rules.txt --output-path eval.json
 
-      - name: Upload Evaluation
+      - name: Upload Caviar vs. Chompy results
         uses: actions/upload-artifact@v4
         with:
           name: eval
