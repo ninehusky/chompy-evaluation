@@ -1,0 +1,31 @@
+name: Chompy Nightly
+
+on:
+  workflow_dispatch: 
+
+jobs:
+  run-python-and-cargo:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Chompy dependencies
+        run: |
+          cd eval/
+          cargo fetch
+
+      - name: Generate Chompy rules
+        run: |
+          cd eval/chompy
+          cargo build --release
+          cargo test --test halide -- --nocapture
