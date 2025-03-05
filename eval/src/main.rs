@@ -44,6 +44,9 @@ struct CLIArgs {
 
     #[arg(long, value_name = "FILE")]
     output_path: Option<PathBuf>,
+
+    #[arg(long, value_name = "FILE")]
+    explanation_output_path: Option<PathBuf>,
 }
 
 #[derive(Debug)]
@@ -85,7 +88,7 @@ fn main() {
         EvalMode::Eggsplain => {
             let dataset_path = args.dataset_path.unwrap();
             let chompy_ruleset_path = args.chompy_ruleset_path.unwrap();
-            let output_path = args.output_path.unwrap();
+            let output_path = args.explanation_output_path.unwrap();
             let chompy_ruleset =
                 caviar_new::structs::Ruleset::new(caviar_new::structs::RulesetTag::Custom(
                     chompy_ruleset_path.to_str().unwrap().to_string(),
@@ -198,10 +201,37 @@ fn caviar_comparison(expr_path: PathBuf, chompy_ruleset: &Ruleset) -> Vec<Rulese
 }
 
 fn write_eggsplanation_results_to_json(
-    output_path: PathBuf,
+    output_path: &PathBuf,
     chompy_ruleset: &caviar_new::structs::Ruleset,
     results: &[ExplanationResult],
 ) {
+    let validation_result_to_string = |res: &ValidationResult| match res {
+        ValidationResult::Valid => "valid",
+        ValidationResult::Invalid => "invalid",
+        ValidationResult::Unknown => "unknown",
+    };
+    let ruleset_strings: Vec<String> = chompy_ruleset
+        .rules()
+        .iter()
+        .map(|r| r.name.to_string())
+        .collect();
+    let ruleset_json = serde_json::json!(ruleset_strings);
+    let results_json = results
+        .iter()
+        .map(|r| {
+            serde_json::json!({
+                "expression": r.expression,
+                "chompy_explanation": r.chompy_explanation,
+                "caviar_explanation": r.caviar_explanation,
+                "z3_result": validation_result_to_string(&r.z3_result),
+            })
+        })
+        .collect::<Vec<serde_json::Value>>();
+    let json = serde_json::json!({
+        "ruleset": ruleset_json,
+        "results": results_json,
+    });
+    std::fs::write(output_path, json.to_string()).unwrap();
 }
 
 fn write_chompy_caviar_results_to_json(
@@ -248,7 +278,7 @@ fn eggsplanations(
         caviar_new::structs::Ruleset::new(caviar_new::structs::RulesetTag::CaviarAll);
     let default_limits = (100000, 100000, 3.0);
     for expr_struct in exprs.unwrap().iter().take(10) {
-        let (caviar_res, explanation) = caviar_new::trs::prove_with_explanation(
+        let (caviar_res, caviar_explanation) = caviar_new::trs::prove_with_explanation(
             expr_struct.index,
             &expr_struct.expression,
             &caviar_ruleset,
@@ -256,7 +286,7 @@ fn eggsplanations(
             false,
             false,
         );
-        let (chompy_res, explanation) = caviar_new::trs::prove_with_explanation(
+        let (chompy_res, chompy_explanation) = caviar_new::trs::prove_with_explanation(
             expr_struct.index,
             &expr_struct.expression,
             chompy_ruleset,
@@ -267,8 +297,8 @@ fn eggsplanations(
 
         let res = ExplanationResult {
             expression: expr_struct.expression.clone(),
-            chompy_explanation: explanation,
-            caviar_explanation: explanation,
+            chompy_explanation,
+            caviar_explanation,
             z3_result: ruler::halide::validate_expression(
                 &Sexp::from_str(&expr_struct.expression).unwrap(),
             ),
