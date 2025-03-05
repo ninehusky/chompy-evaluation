@@ -3,4 +3,4 @@
 	url = git@github.com:ninehusky/caviar.git
 [submodule "chompy"]
 	path = chompy
-	url = git@github.com:ninehusky/chompy.git
+	url = https://github.com/ninehusky/caviar.git
