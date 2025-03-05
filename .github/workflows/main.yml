@@ -25,7 +25,16 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Generate Chompy rules
+      - name: Install Flamegraph
+        run: cargo install flamegraph
+
+      - name: Generate Chompy Rules
         run: |
           cd chompy/
-          cargo test --test halide -- --nocapture
+          cargo flamegraph --root --test halide -- --nocapture
+
+      - name: Upload Flamegraph
+        uses: actions/upload-artifact@v4
+        with:
+          name: flamegraph
+          path: chompy/flamegraph.svg
