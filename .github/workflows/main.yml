@@ -33,6 +33,7 @@ jobs:
           components: rustfmt, clippy
 
       - name: Generate Chompy rules
+        uses: actions-rs/toolchain@v1
         run: |
           cd chompy/
           cargo test --test halide -- --nocapture
