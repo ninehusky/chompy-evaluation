@@ -156,7 +156,7 @@ fn caviar_comparison(expr_path: PathBuf, chompy_ruleset: &Ruleset) -> Vec<Rulese
         let chompy_res = caviar::trs::prove_pulses_npp(
             expr_struct.index,
             &expr_struct.expression,
-            &chompy_ruleset,
+            chompy_ruleset,
             0.01,
             default_limits,
             true,
@@ -179,7 +179,7 @@ fn caviar_comparison(expr_path: PathBuf, chompy_ruleset: &Ruleset) -> Vec<Rulese
 fn write_chompy_caviar_results_to_json(
     output_path: PathBuf,
     chompy_ruleset: &Ruleset,
-    results: &Vec<RulesetComparisonResult>,
+    results: &[RulesetComparisonResult],
 ) {
     let validation_result_to_string = |res: &ValidationResult| match res {
         ValidationResult::Valid => "valid",
