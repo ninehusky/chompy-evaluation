@@ -43,7 +43,7 @@ struct CLIArgs {
     other_ruleset_path: Option<PathBuf>,
 
     #[arg(long, value_name = "FILE")]
-    output_path: Option<PathBuf>,
+    ruleset_comparison_output_path: Option<PathBuf>,
 
     #[arg(long, value_name = "FILE")]
     explanation_output_path: Option<PathBuf>,
@@ -60,6 +60,8 @@ struct RulesetComparisonResult {
 #[derive(Debug)]
 struct ExplanationResult {
     expression: String,
+    chompy_result: caviar_new::structs::ResultStructure,
+    caviar_result: caviar_new::structs::ResultStructure,
     chompy_explanation: String,
     caviar_explanation: String,
     z3_result: ValidationResult,
@@ -72,7 +74,7 @@ fn main() {
         EvalMode::CaviarComparison => {
             let dataset_path = args.dataset_path.unwrap();
             let chompy_ruleset_path = args.chompy_ruleset_path.unwrap();
-            let output_path = args.output_path.unwrap();
+            let output_path = args.ruleset_comparison_output_path.unwrap();
             let chompy_ruleset = Ruleset::new(RulesetTag::Custom(
                 chompy_ruleset_path.to_str().unwrap().to_string(),
             ));
@@ -221,6 +223,8 @@ fn write_eggsplanation_results_to_json(
         .map(|r| {
             serde_json::json!({
                 "expression": r.expression,
+                "chompy_result": r.chompy_result,
+                "caviar_result": r.caviar_result,
                 "chompy_explanation": r.chompy_explanation,
                 "caviar_explanation": r.caviar_explanation,
                 "z3_result": validation_result_to_string(&r.z3_result),
@@ -297,6 +301,8 @@ fn eggsplanations(
 
         let res = ExplanationResult {
             expression: expr_struct.expression.clone(),
+            chompy_result: chompy_res,
+            caviar_result: caviar_res,
             chompy_explanation,
             caviar_explanation,
             z3_result: ruler::halide::validate_expression(
