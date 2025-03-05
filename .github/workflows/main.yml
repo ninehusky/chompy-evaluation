@@ -1,18 +1,19 @@
 name: Chompy Nightly
 
-# Controls when the action will run.
 on:
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+  push:  # Runs on every push to any branch
+    branches:
+      - '**'
+  schedule:  # Runs nightly at 1 AM PST
+    - cron: '0 9 * * *'  # 1 AM PST = 9 AM UTC
 
 jobs:
-  # This workflow contains a single job called "update"
   update:
     runs-on: ubuntu-latest
 
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
+      - uses: dtolnay/rust-toolchain@stable
 
       - name: Pull & update submodules recursively
         run: |
@@ -24,16 +25,52 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Set up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: 1.70
-          default: true
-          override: true
-          components: rustfmt, clippy
+      - name: Install Flamegraph
+        run: cargo install flamegraph
 
-      - name: Generate Chompy rules
+      - name: Generate Chompy Rules
+        env:
+          HALIDE_RULES_OUTPUT_PATH: chompy-rules.txt
         run: |
           cd chompy/
-          cargo build --release
-          cargo test --test halide -- --nocapture
+          cargo flamegraph --root --test halide -- --nocapture
+
+      - name: Upload Flamegraph
+        uses: actions/upload-artifact@v4
+        with:
+          name: flamegraph
+          path: chompy/flamegraph.svg
+
+      - name: Upload Chompy Rules
+        uses: actions/upload-artifact@v4
+        with:
+          name: chompy-rules
+          path: chompy/chompy-rules.txt
+
+      - name: Run Caviar vs. Chompy comparison
+        run: |
+          cd eval/
+          cargo run --release -- --eval-mode caviar --dataset-path ../../caviar/data/prefix/evaluation.csv --chompy-ruleset-path ../chompy/chompy-rules.txt --ruleset-comparison-output-path chompyvscaviar.json
+
+      - name: Upload Caviar vs. Chompy results
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval
+          path: eval/chompyvscaviar.json
+
+      - name: Get eggsplanations
+        run: |
+          cd eval/
+          cargo run --release -- --eval-mode eggsplain --dataset-path ../../caviar/data/prefix/evaluation.csv  --chompy-ruleset-path ../chompy/chompy-rules.txt --explanation-output-path ./eggsplain.json
+
+      - name: Upload eggsplanations
+        uses: actions/upload-artifact@v4
+        with:
+          name: eggsplain
+          path: eval/eggsplain.json
+
+
+
+
+
+

@@ -9,4 +9,5 @@ serde_json = "1.0.139"
 
 ruler = { git = "https://github.com/ninehusky/chompy.git" }
 caviar = { git = "https://github.com/ninehusky/caviar.git" }
+caviar-new = { git = "https://github.com/ninehusky/caviar.git", branch = "ninehusky-add-eggsplanations", package = "caviar" }
 
