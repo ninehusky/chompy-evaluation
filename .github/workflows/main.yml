@@ -32,11 +32,6 @@ jobs:
           override: true
           components: rustfmt, clippy
 
-      - name: Install Chompy dependencies
-        run: |
-          cd eval/
-          cargo fetch
-
       - name: Generate Chompy rules
         run: |
           cd chompy/
