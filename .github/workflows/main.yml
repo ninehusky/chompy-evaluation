@@ -1,23 +1,5 @@
 name: Chompy Nightly
 
-on:
-  workflow_dispatch: 
-
-jobs:
-  run-python-and-cargo:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-        
-Simple solution
-
-You pull and update the submodules recursively and then commit to the repo.
-
-name: Update submodules
-
 # Controls when the action will run.
 on:
   # Allows you to run this workflow manually from the Actions tab
