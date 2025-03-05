@@ -50,7 +50,7 @@ jobs:
       - name: Run Caviar vs. Chompy comparison
         run: |
           cd eval/
-          cargo run --release -- --eval-mode caviar --dataset-path ../../caviar/data/prefix/evaluation.csv --chompy-rules ../chompy/chompy-rules.txt --output-path eval.json
+          cargo run --release -- --eval-mode caviar --dataset-path ../../caviar/data/prefix/evaluation.csv --chompy-ruleset-path ../chompy/chompy-rules.txt --output-path eval.json
 
       - name: Upload Caviar vs. Chompy results
         uses: actions/upload-artifact@v4
