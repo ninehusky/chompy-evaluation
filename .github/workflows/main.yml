@@ -11,6 +11,32 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+        
+Simple solution
+
+You pull and update the submodules recursively and then commit to the repo.
+
+name: Update submodules
+
+# Controls when the action will run.
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  # This workflow contains a single job called "update"
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Pull & update submodules recursively
+        run: |
+          git submodule update --init --recursive
+          git submodule update --recursive --remote
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -26,6 +52,6 @@ jobs:
 
       - name: Generate Chompy rules
         run: |
-          cd eval/chompy
+          cd chompy/
           cargo build --release
           cargo test --test halide -- --nocapture
