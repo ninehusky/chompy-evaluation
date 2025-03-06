@@ -17,6 +17,13 @@ jobs:
       - uses: actions/checkout@v2
       - uses: dtolnay/rust-toolchain@stable
 
+      - name: Change submodule branch
+        run: |
+          cd chompy/
+          git fetch origin ninehusky-03-06-verbose-no-consts
+          git checkout ninehusky-03-06-verbose-no-consts
+          git pull origin ninehusky-03-06-verbose-no-consts
+
       - name: Pull & update submodules recursively
         run: |
           git submodule update --init --recursive
