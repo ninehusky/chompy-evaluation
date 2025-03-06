@@ -169,7 +169,7 @@ fn caviar_comparison(expr_path: PathBuf, chompy_ruleset: &Ruleset) -> Vec<Rulese
     let exprs = caviar::io::reader::read_expressions(&expr_path.into());
     let caviar_ruleset = Ruleset::new(RulesetTag::CaviarAll);
     let default_limits = (100000, 100000, 3.0);
-    for expr_struct in exprs.unwrap().iter().take(10) {
+    for expr_struct in exprs.unwrap().iter() {
         let caviar_res = caviar::trs::prove_pulses_npp(
             expr_struct.index,
             &expr_struct.expression,
@@ -281,7 +281,7 @@ fn eggsplanations(
     let caviar_ruleset =
         caviar_new::structs::Ruleset::new(caviar_new::structs::RulesetTag::CaviarAll);
     let default_limits = (100000, 100000, 3.0);
-    for expr_struct in exprs.unwrap().iter().take(10) {
+    for expr_struct in exprs.unwrap().iter() {
         let (caviar_res, caviar_explanation) = caviar_new::trs::prove_with_explanation(
             expr_struct.index,
             &expr_struct.expression,
