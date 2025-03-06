@@ -31,9 +31,8 @@ jobs:
         run: cargo install flamegraph
 
       - name: Generate Chompy Rules
-        env:
-          HALIDE_RULES_OUTPUT_PATH: ${{ env.CHOMPY_EVALUATION_DIR }}/chompy/chompy-rules.txt
         run: |
+          export HALIDE_RULES_OUTPUT_PATH="$CHOMPY_EVALUATION_DIR/chompy/chompy-rules.txt"
           cd chompy/
           cargo flamegraph --root --test halide -- --nocapture
 
