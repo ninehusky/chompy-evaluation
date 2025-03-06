@@ -280,8 +280,8 @@ fn eggsplanations(
     let exprs = caviar_new::io::reader::read_expressions(&expr_path.into());
     let caviar_ruleset =
         caviar_new::structs::Ruleset::new(caviar_new::structs::RulesetTag::CaviarAll);
-    let default_limits = (100000, 100000, 3.0);
-    for expr_struct in exprs.unwrap().iter().take(10) {
+    let default_limits = (1000000, 1000000, 20.0);
+    for expr_struct in exprs.unwrap().iter() {
         let (caviar_res, caviar_explanation) = caviar_new::trs::prove_with_explanation(
             expr_struct.index,
             &expr_struct.expression,
