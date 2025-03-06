@@ -17,6 +17,11 @@ jobs:
       - uses: actions/checkout@v2
       - uses: dtolnay/rust-toolchain@stable
 
+      - name: Pull & update submodules recursively
+        run: |
+          git submodule update --init --recursive
+          git submodule update --recursive --remote
+
       - name: Change submodule branch
         run: |
           cd chompy/
@@ -24,10 +29,6 @@ jobs:
           git checkout ninehusky-03-06-verbose-no-consts
           git pull origin ninehusky-03-06-verbose-no-consts
 
-      - name: Pull & update submodules recursively
-        run: |
-          git submodule update --init --recursive
-          git submodule update --recursive --remote
 
       - name: Set up Python
         uses: actions/setup-python@v5
