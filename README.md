@@ -6,6 +6,8 @@ More detailed instructions to follow, but when running `./eval`, make
 sure to run with `--release`, because without it something crashes and I don't know why.
 See #3.
 
+`$CHOMPY_EVAL_DIR` should be set to the root of this repository.
+
 ## About the Evaluation
 
 The nightly evaluation runs the following experiments:
