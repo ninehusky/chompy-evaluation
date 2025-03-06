@@ -8,8 +8,10 @@ on:
     - cron: '0 9 * * *'  # 1 AM PST = 9 AM UTC
 
 jobs:
-  update:
+  evaluation:
     runs-on: ubuntu-latest
+    env:
+      CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
 
     steps:
       - uses: actions/checkout@v2
@@ -49,28 +51,28 @@ jobs:
 
       - name: Run Caviar vs. Chompy comparison
         run: |
-          cd eval/
-          cargo run --release -- --eval-mode caviar --dataset-path ../../caviar/data/prefix/evaluation.csv --chompy-ruleset-path ../chompy/chompy-rules.txt --ruleset-comparison-output-path chompyvscaviar.json
+          cd "$CHOMPY_EVALUATION_DIR/eval"
+          cargo run --release -- --eval-mode caviar \
+            --dataset-path "$CHOMPY_EVALUATION_DIR/caviar/data/prefix/evaluation.csv" \
+            --chompy-ruleset-path "$CHOMPY_EVALUATION_DIR/chompy/chompy-rules.txt" \
+            --ruleset-comparison-output-path chompyvscaviar.json
 
       - name: Upload Caviar vs. Chompy results
         uses: actions/upload-artifact@v4
         with:
           name: eval
-          path: eval/chompyvscaviar.json
+          path: ${{ env.CHOMPY_EVALUATION_DIR }}/eval/chompyvscaviar.json
 
       - name: Get eggsplanations
         run: |
-          cd eval/
-          cargo run --release -- --eval-mode eggsplain --dataset-path ../../caviar/data/prefix/evaluation.csv  --chompy-ruleset-path ../chompy/chompy-rules.txt --explanation-output-path ./eggsplain.json
+          cd "$CHOMPY_EVALUATION_DIR/eval"
+          cargo run --release -- --eval-mode eggsplain \
+            --dataset-path "$CHOMPY_EVALUATION_DIR/caviar/data/prefix/evaluation.csv" \
+            --chompy-ruleset-path "$CHOMPY_EVALUATION_DIR/chompy/chompy-rules.txt" \
+            --explanation-output-path "$CHOMPY_EVALUATION_DIR/eval/eggsplain.json"
 
       - name: Upload eggsplanations
         uses: actions/upload-artifact@v4
         with:
           name: eggsplain
-          path: eval/eggsplain.json
-
-
-
-
-
-
+          path: ${{ env.CHOMPY_EVALUATION_DIR }}/eval/eggsplain.json
