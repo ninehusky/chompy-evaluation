@@ -32,7 +32,7 @@ jobs:
 
       - name: Generate Chompy Rules
         env:
-        HALIDE_RULES_OUTPUT_PATH: ${{ env.CHOMPY_EVALUATION_DIR }}/chompy/chompy-rules.txt
+          HALIDE_RULES_OUTPUT_PATH: ${{ env.CHOMPY_EVALUATION_DIR }}/chompy/chompy-rules.txt
         run: |
           cd chompy/
           cargo flamegraph --root --test halide -- --nocapture
