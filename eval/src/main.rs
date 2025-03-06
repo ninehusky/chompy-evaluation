@@ -47,6 +47,9 @@ struct CLIArgs {
 
     #[arg(long, value_name = "FILE")]
     explanation_output_path: Option<PathBuf>,
+
+    #[arg(long, value_name = "FILE")]
+    derivability_output_path: Option<PathBuf>,
 }
 
 #[derive(Debug)]
@@ -67,6 +70,14 @@ struct ExplanationResult {
     z3_result: ValidationResult,
 }
 
+#[derive(Debug)]
+struct DerivabilityResult {
+    can_len: usize,
+    cannot_len: usize,
+    can: Vec<String>,
+    cannot: Vec<String>,
+}
+
 fn main() {
     let args = CLIArgs::parse();
     let mode = EvalMode::from(args.eval_mode);
@@ -84,8 +95,10 @@ fn main() {
         EvalMode::DerivabilityComparison => {
             let ruleset_path = args.chompy_ruleset_path.unwrap();
             let against_path = args.other_ruleset_path.unwrap();
-            derivability_check(ruleset_path.clone(), against_path.clone());
-            derivability_check(against_path, ruleset_path);
+            let output_path = args.derivability_output_path.unwrap();
+            let first_direction = derivability_check(ruleset_path.clone(), against_path.clone());
+            let second_direction = derivability_check(against_path, ruleset_path);
+            write_derivability_results_to_json(&output_path, &first_direction, &second_direction);
         }
         EvalMode::Eggsplain => {
             let dataset_path = args.dataset_path.unwrap();
@@ -105,7 +118,7 @@ fn main() {
     }
 }
 
-fn derivability_check(ruleset_path: PathBuf, against_path: PathBuf) {
+fn derivability_check(ruleset_path: PathBuf, against_path: PathBuf) -> DerivabilityResult {
     fn read_ruleset_from_file(path: PathBuf) -> enumo::Ruleset<Pred> {
         let lines = std::fs::read_to_string(path).unwrap();
         let mut result: enumo::Ruleset<Pred> = enumo::Ruleset::default();
@@ -148,8 +161,15 @@ fn derivability_check(ruleset_path: PathBuf, against_path: PathBuf) {
         &Some(conditional_prop_rules),
     );
 
-    println!("can: {:#?}", can.len());
-    println!("cannot: {:#?}", cannot.len());
+    let can: Vec<String> = can.into_iter().map(|r| r.0.to_string()).collect();
+    let cannot: Vec<String> = cannot.into_iter().map(|r| r.0.to_string()).collect();
+
+    DerivabilityResult {
+        can_len: can.len(),
+        cannot_len: cannot.len(),
+        can,
+        cannot,
+    }
 }
 
 fn verify_expressions(path: PathBuf) -> Vec<ruler::ValidationResult> {
@@ -312,4 +332,24 @@ fn eggsplanations(
         results.push(res);
     }
     results
+}
+
+fn write_derivability_results_to_json(
+    output_path: &PathBuf,
+    forwards_result: &DerivabilityResult,
+    backwards_result: &DerivabilityResult,
+) {
+    let to_json = |result: &DerivabilityResult| {
+        serde_json::json!({
+            "can_len": result.can_len,
+            "cannot_len": result.cannot_len,
+            "can": result.can,
+            "cannot": result.cannot,
+        })
+    };
+    let json = serde_json::json!({
+        "forwards": to_json(forwards_result),
+        "backwards": to_json(backwards_result),
+    });
+    std::fs::write(output_path, json.to_string()).unwrap();
 }
