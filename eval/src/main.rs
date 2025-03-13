@@ -113,6 +113,7 @@ fn derivability_check(ruleset_path: PathBuf, against_path: PathBuf) {
             if r.is_empty() {
                 continue;
             }
+            println!("r: {}", r);
             let (fw, bw) = Rule::from_string(r).unwrap();
             result.add(fw);
             if let Some(bw) = bw {
@@ -129,10 +130,13 @@ fn derivability_check(ruleset_path: PathBuf, against_path: PathBuf) {
             .collect()
     }
 
+    println!("ruleset: {:?}", ruleset_path);
     let ruleset = read_ruleset_from_file(ruleset_path);
+    println!("against: {:?}", against_path);
     let against = read_ruleset_from_file(against_path);
 
     let mut conditions = get_conditions(&ruleset);
+    conditions.extend(get_conditions(&against));
 
     conditions.dedup();
 
@@ -150,6 +154,8 @@ fn derivability_check(ruleset_path: PathBuf, against_path: PathBuf) {
 
     println!("can: {:#?}", can.len());
     println!("cannot: {:#?}", cannot.len());
+
+    assert_eq!(cannot.len() + can.len(), against.len());
 }
 
 fn verify_expressions(path: PathBuf) -> Vec<ruler::ValidationResult> {

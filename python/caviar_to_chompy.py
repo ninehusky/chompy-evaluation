@@ -66,8 +66,7 @@ def parse_condition(cond: str) -> str:
             return f"(< {args[0]} 0)".replace("\"", "")
         case "crate::trs::is_not_zero":
             assert len(args) == 1, f"Expected 1 argument for is_not_zero, got {len(args)}"
-            # TODO (@ninehusky): should this be (!= {args 0})?
-            return f"(! (= {args[0]} 0))"
+            return f"(!= {args[0]} 0)"
         case "crate::trs::compare_c0_c1":
             assert len(args) == 3, f"Expected 3 arguments for compare_c0_c1, got {len(args)}"
             comp_op = args[-1]
@@ -99,13 +98,13 @@ def parse_condition(cond: str) -> str:
                 case "!=":
                     return f"(!= {args[0]} {args[1]})"
                 case "%0":
-                    return f"((&& (!= {args[1]} 0) (== (% {args[0]} {args[1]}) 0))"
+                    return f"(&& (!= {args[1]} 0) (== (% {args[0]} {args[1]}) 0))"
                 case "!%0":
-                    return f"((&& (!= {args[1]} 0) (!= (% {args[0]} {args[1]}) 0))"
+                    return f"(&& (!= {args[1]} 0) (!= (% {args[0]} {args[1]}) 0))"
                 case "%0<":
-                    return f"((&& (> {args[1]} 0) (== (% {args[0]} {args[1]}) 0))"
+                    return f"(&& (> {args[1]} 0) (== (% {args[0]} {args[1]}) 0))"
                 case "%0>":
-                    return f"((&& (< {args[1]} 0) (== (% {args[0]} {args[1]}) 0))"
+                    return f"(&& (< {args[1]} 0) (== (% {args[0]} {args[1]}) 0))"
                 case _:
                     raise ValueError(f"Unknown comparison operator {comp_op}")
         case _:
@@ -132,5 +131,9 @@ if __name__== "__main__":
     parser.add_argument("--output", type=str, help="Output file")
     args = parser.parse_args()
     rws = get_rewrites()
+    output = ""
     for rw in rws:
-        print(parse_rewrite(rw))
+        output += str(parse_rewrite(rw)) + "\n"
+
+    with open(args.output, "w") as f:
+        f.write(output)
