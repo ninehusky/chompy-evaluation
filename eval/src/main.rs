@@ -113,7 +113,6 @@ fn derivability_check(ruleset_path: PathBuf, against_path: PathBuf) {
             if r.is_empty() {
                 continue;
             }
-            println!("r: {}", r);
             let (fw, bw) = Rule::from_string(r).unwrap();
             result.add(fw);
             if let Some(bw) = bw {
@@ -194,22 +193,6 @@ fn caviar_comparison(expr_path: PathBuf, chompy_ruleset: &Ruleset) -> Vec<Rulese
             true,
             false,
         );
-
-        println!("chompy result: {:?}", chompy_res);
-        println!("caviar result: {:?}", caviar_res);
-
-        let good_stop_reason =
-            |reason: String| reason.contains("Goal") || reason.contains("Impossible");
-
-        if good_stop_reason(chompy_res.stop_reason.clone())
-            && !good_stop_reason(caviar_res.stop_reason.clone())
-        {
-            println!("Chompy succeeded, Caviar failed");
-        } else if !good_stop_reason(chompy_res.stop_reason.clone())
-            && good_stop_reason(caviar_res.stop_reason.clone())
-        {
-            println!("Chompy failed, Caviar succeeded");
-        }
 
         let res = RulesetComparisonResult {
             expression: expr_struct.expression.clone(),
