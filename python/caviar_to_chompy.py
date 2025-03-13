@@ -4,7 +4,7 @@ from typing import Optional
 import os
 import re
 
-RULE_DIR = f"{os.environ['CHOMPY_EVALUATION_DIR']}caviar/src/rules"
+RULE_DIR = f"{os.environ['CHOMPY_EVALUATION_DIR']}/caviar/src/rules"
 
 EXPECTED_FILES = [
         "add.rs",
