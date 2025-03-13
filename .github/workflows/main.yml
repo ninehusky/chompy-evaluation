@@ -51,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: evaluation
     env:
-      CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
+      CHOMPY_EVALUATION_DIR: ${{ github.workspace }} //
 
     steps:
       - uses: actions/checkout@v2
@@ -62,14 +62,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: chompy-rules
-          path: ${{ env.CHOMPY_EVALUATION_DIR }}/chompy/
+          path: ${{ env.CHOMPY_EVALUATION_DIR }}/chompy-rules.txt
 
       - name: Run Caviar vs. Chompy comparison
         run: |
           cd "$CHOMPY_EVALUATION_DIR/eval"
           cargo run --release -- --eval-mode caviar \
             --dataset-path "$CHOMPY_EVALUATION_DIR/caviar/data/prefix/evaluation.csv" \
-            --chompy-ruleset-path "$CHOMPY_EVALUATION_DIR/chompy/chompy-rules.txt" \
+            --chompy-ruleset-path "$CHOMPY_EVALUATION_DIR/chompy-rules.txt" \
             --ruleset-comparison-output-path chompyvscaviar.json
 
       - name: Upload Caviar vs. Chompy results
@@ -95,14 +95,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: chompy-rules
-          path: ${{ env.CHOMPY_EVALUATION_DIR }}/chompy/
+          path: ${{ env.CHOMPY_EVALUATION_DIR }}/chompy-rules.txt
 
       - name: Get eggsplanations
         run: |
           cd "$CHOMPY_EVALUATION_DIR/eval"
           cargo run --release -- --eval-mode eggsplain \
             --dataset-path "$CHOMPY_EVALUATION_DIR/caviar/data/prefix/evaluation.csv" \
-            --chompy-ruleset-path "$CHOMPY_EVALUATION_DIR/chompy/chompy-rules.txt" \
+            --chompy-ruleset-path "$CHOMPY_EVALUATION_DIR/chompy-rules.txt" \
             --explanation-output-path "$CHOMPY_EVALUATION_DIR/eval/eggsplain.json"
 
       - name: Upload eggsplanations
