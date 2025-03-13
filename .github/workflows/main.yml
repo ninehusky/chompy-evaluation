@@ -55,14 +55,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        with:
-          submodules: false  # No need to pull submodules again
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Pull & update submodules recursively
+        run: |
+          git submodule update --init --recursive
+          git submodule update --recursive --remote
 
       - name: Download Chompy Rules
         uses: actions/download-artifact@v4
         with:
           name: chompy-rules
-          path: ${{ env.CHOMPY_EVALUATION_DIR }}/chompy-rules.txt
+          path: chompy-rules.txt
 
       - name: Run Caviar vs. Chompy comparison
         run: |
@@ -95,14 +99,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: chompy-rules
-          path: ${{ env.CHOMPY_EVALUATION_DIR }}/chompy-rules.txt
+          path: ${{ env.CHOMPY_EVALUATION_DIR }}/chompy/chompy-rules.txt
 
       - name: Get eggsplanations
         run: |
           cd "$CHOMPY_EVALUATION_DIR/eval"
           cargo run --release -- --eval-mode eggsplain \
             --dataset-path "$CHOMPY_EVALUATION_DIR/caviar/data/prefix/evaluation.csv" \
-            --chompy-ruleset-path "$CHOMPY_EVALUATION_DIR/chompy-rules.txt" \
+            --chompy-ruleset-path "$CHOMPY_EVALUATION_DIR/chompy/chompy-rules.txt" \
             --explanation-output-path "$CHOMPY_EVALUATION_DIR/eval/eggsplain.json"
 
       - name: Upload eggsplanations
@@ -120,13 +124,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          submodules: false  # No need to pull submodules again
+          submodules: true
 
       - name: Download Chompy Rules
         uses: actions/download-artifact@v4
         with:
           name: chompy-rules
-          path: ${{ env.CHOMPY_EVALUATION_DIR }}/chompy/
+          path: ${{ env.CHOMPY_EVALUATION_DIR }}/chompy/chompy-rules.txt
 
       - name: Generate Caviar rules
         run: |
