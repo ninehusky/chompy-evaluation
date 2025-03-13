@@ -50,7 +50,20 @@ jobs:
   caviar:
     runs-on: ubuntu-latest
     needs: evaluation
+    env:
+      CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
+
     steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: false  # No need to pull submodules again
+
+      - name: Download Chompy Rules
+        uses: actions/download-artifact@v4
+        with:
+          name: chompy-rules
+          path: ${{ env.CHOMPY_EVALUATION_DIR }}/chompy/
+
       - name: Run Caviar vs. Chompy comparison
         run: |
           cd "$CHOMPY_EVALUATION_DIR/eval"
@@ -70,7 +83,20 @@ jobs:
   eggsplanations:
     runs-on: ubuntu-latest
     needs: evaluation
+    env:
+      CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
+
     steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: false  # No need to pull submodules again
+
+      - name: Download Chompy Rules
+        uses: actions/download-artifact@v4
+        with:
+          name: chompy-rules
+          path: ${{ env.CHOMPY_EVALUATION_DIR }}/chompy/
+
       - name: Get eggsplanations
         run: |
           cd "$CHOMPY_EVALUATION_DIR/eval"
@@ -86,24 +112,37 @@ jobs:
           path: ${{ env.CHOMPY_EVALUATION_DIR }}/eval/eggsplain.json
 
   derivability:
-      runs-on: ubuntu-latest
-      needs: evaluation
-      steps:
-        - name: Generate Caviar rules
-          run: |
-            cd "$CHOMPY_EVALUATION_DIR/python"
-            python3 caviar_to_chompy.py --output "$CHOMPY_EVALUATION_DIR/chompy/caviar-rules.txt"
+    runs-on: ubuntu-latest
+    needs: evaluation
+    env:
+      CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
 
-        - name: Perform derivability check
-          run: |
-            cd "$CHOMPY_EVALUATION_DIR/eval"
-            cargo run --release -- --eval-mode derivability \
-                --chompy-ruleset-path "$CHOMPY_EVALUATION_DIR/chompy/chompy-rules.txt" \
-                --other-ruleset-path "$CHOMPY_EVALUATION_DIR/chompy/caviar-rules.txt" \
-                --derivability-output-path "$CHOMPY_EVALUATION_DIR/derive-results.json"
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: false  # No need to pull submodules again
 
-        - name: Upload derivability check results
-          uses: actions/upload-artifact@v4
-          with:
-            name: chompy-vs-caviar-derivability
-            path: ${{ env.CHOMPY_EVALUATION_DIR }}/derive-results.json
+      - name: Download Chompy Rules
+        uses: actions/download-artifact@v4
+        with:
+          name: chompy-rules
+          path: ${{ env.CHOMPY_EVALUATION_DIR }}/chompy/
+
+      - name: Generate Caviar rules
+        run: |
+          cd "$CHOMPY_EVALUATION_DIR/python"
+          python3 caviar_to_chompy.py --output "$CHOMPY_EVALUATION_DIR/chompy/caviar-rules.txt"
+
+      - name: Perform derivability check
+        run: |
+          cd "$CHOMPY_EVALUATION_DIR/eval"
+          cargo run --release -- --eval-mode derivability \
+              --chompy-ruleset-path "$CHOMPY_EVALUATION_DIR/chompy/chompy-rules.txt" \
+              --other-ruleset-path "$CHOMPY_EVALUATION_DIR/chompy/caviar-rules.txt" \
+              --derivability-output-path "$CHOMPY_EVALUATION_DIR/derive-results.json"
+
+      - name: Upload derivability check results
+        uses: actions/upload-artifact@v4
+        with:
+          name: chompy-vs-caviar-derivability
+          path: ${{ env.CHOMPY_EVALUATION_DIR }}/derive-results.json
