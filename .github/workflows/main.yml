@@ -61,6 +61,12 @@ jobs:
           name: eval
           path: ${{ env.CHOMPY_EVALUATION_DIR }}/eval/chompyvscaviar.json
 
+      - name: Do derivability check
+
+  eggsplanations:
+    runs-on: ubuntu-latest
+    needs: evaluation
+    steps:
       - name: Get eggsplanations
         run: |
           cd "$CHOMPY_EVALUATION_DIR/eval"
@@ -74,3 +80,15 @@ jobs:
         with:
           name: eggsplain
           path: ${{ env.CHOMPY_EVALUATION_DIR }}/eval/eggsplain.json
+
+    derivability:
+      runs-on: ubuntu-latest
+      needs: evaluation
+      steps:
+        - name: Run derivability
+          run: |
+            cd "$CHOMPY_EVALUATION_DIR/eval"
+            cargo run --release -- --eval-mode derivability \
+              --chompy-ruleset-path "$CHOMPY_EVALUATION_DIR/chompy/chompy-rules.txt" \
+              --other-ruleset-path "$CHOMPY_EVALUATION_DIR/caviar/data/prefix/evaluation.csv" \
+    
