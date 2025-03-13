@@ -44,7 +44,7 @@ jobs:
       - name: Upload Chompy Rules
         uses: actions/upload-artifact@v4
         with:
-          name: chompy-rules
+          name: chompy-rules.txt
           path: ${{ env.CHOMPY_EVALUATION_DIR }}/chompy/chompy-rules.txt
 
   caviar:
@@ -67,8 +67,8 @@ jobs:
       - name: Download Chompy Rules
         uses: actions/download-artifact@v4
         with:
-          name: chompy-rules
-          path: chompy-rules.txt
+          name: chompy-rules.txt
+          path: ${{ env.CHOMPY_EVALUATION_DIR }}
 
       - name: Run Caviar vs. Chompy comparison
         run: |
@@ -100,15 +100,15 @@ jobs:
       - name: Download Chompy Rules
         uses: actions/download-artifact@v4
         with:
-          name: chompy-rules
-          path: ${{ env.CHOMPY_EVALUATION_DIR }}/chompy/chompy-rules.txt
+          name: chompy-rules.txt
+          path: ${{ env.CHOMPY_EVALUATION_DIR }}
 
       - name: Get eggsplanations
         run: |
           cd "$CHOMPY_EVALUATION_DIR/eval"
           cargo run --release -- --eval-mode eggsplain \
             --dataset-path "$CHOMPY_EVALUATION_DIR/caviar/data/prefix/evaluation.csv" \
-            --chompy-ruleset-path "$CHOMPY_EVALUATION_DIR/chompy/chompy-rules.txt" \
+            --chompy-ruleset-path "$CHOMPY_EVALUATION_DIR/chompy-rules.txt" \
             --explanation-output-path "$CHOMPY_EVALUATION_DIR/eval/eggsplain.json"
 
       - name: Upload eggsplanations
