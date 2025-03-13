@@ -61,7 +61,25 @@ jobs:
           name: eval
           path: ${{ env.CHOMPY_EVALUATION_DIR }}/eval/chompyvscaviar.json
 
-      - name: Do derivability check
+      - name: Generate Caviar rules
+        run: |
+          cd "$CHOMPY_EVALUATION_DIR/python"
+          python3 caviar_to_chompy.py --output "$CHOMPY_EVALUATION_DIR/chompy/caviar-rules.txt"
+
+      - name: Perform derivability check
+        run: |
+          cd "$CHOMPY_EVALUATION_DIR/eval"
+          cargo run --release -- --eval-mode derivability \
+            --chompy-ruleset-path "$CHOMPY_EVALUATION_DIR/chompy/chompy-rules.txt" \
+            --other-ruleset-path "$CHOMPY_EVALUATION_DIR/chompy/caviar-rules.txt" \
+            --derivability-output-path "$CHOMPY_EVALUATION_DIR/derive-results.json"
+
+      - name: Upload derivability check results
+        uses: actions/upload-artifact@v4
+        with:
+          name: chompy-vs-caviar-derivability
+          path: ${{ env.CHOMPY_EVALUATION_DIR }}/derive-results.json
+
 
   eggsplanations:
     runs-on: ubuntu-latest
