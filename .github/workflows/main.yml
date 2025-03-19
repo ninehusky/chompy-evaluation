@@ -86,42 +86,42 @@ jobs:
           path: ${{ env.CHOMPY_EVALUATION_DIR }}/eval/chompyvscaviar.json
 
 
+  # @ninehusky -- Running this in CI is a bad idea. See #22.
+  # eggsplanations:
+  #   runs-on: ubuntu-20.04
+  #   needs: evaluation
+  #   env:
+  #     CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
 
-  eggsplanations:
-    runs-on: ubuntu-20.04
-    needs: evaluation
-    env:
-      CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         submodules: false  # No need to pull submodules again
 
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: false  # No need to pull submodules again
+  #     - name: Download Chompy Rules
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: chompy-rules
+  #         path: ${{ env.CHOMPY_EVALUATION_DIR }}
 
-      - name: Download Chompy Rules
-        uses: actions/download-artifact@v4
-        with:
-          name: chompy-rules
-          path: ${{ env.CHOMPY_EVALUATION_DIR }}
+  #     - name: Pull & update submodules recursively
+  #       run: |
+  #         git submodule update --init --recursive
+  #         git submodule update --recursive --remote
 
-      - name: Pull & update submodules recursively
-        run: |
-          git submodule update --init --recursive
-          git submodule update --recursive --remote
+  #     - name: Get eggsplanations
+  #       run: |
+  #         cd "$CHOMPY_EVALUATION_DIR/eval"
+  #         cargo run --release -- --eval-mode eggsplain \
+  #           --dataset-path "$CHOMPY_EVALUATION_DIR/caviar/data/prefix/evaluation.csv" \
+  #           --chompy-ruleset-path "$CHOMPY_EVALUATION_DIR/chompy-rules.txt" \
+  #           --explanation-output-path "$CHOMPY_EVALUATION_DIR/eval/eggsplain.json"
 
-      - name: Get eggsplanations
-        run: |
-          cd "$CHOMPY_EVALUATION_DIR/eval"
-          cargo run --release -- --eval-mode eggsplain \
-            --dataset-path "$CHOMPY_EVALUATION_DIR/caviar/data/prefix/evaluation.csv" \
-            --chompy-ruleset-path "$CHOMPY_EVALUATION_DIR/chompy-rules.txt" \
-            --explanation-output-path "$CHOMPY_EVALUATION_DIR/eval/eggsplain.json"
-
-      - name: Upload eggsplanations
-        uses: actions/upload-artifact@v4
-        with:
-          name: eggsplain
-          path: ${{ env.CHOMPY_EVALUATION_DIR }}/eval/eggsplain.json
+  #     - name: Upload eggsplanations
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: eggsplain
+  #         path: ${{ env.CHOMPY_EVALUATION_DIR }}/eval/eggsplain.json
 
   derivability:
     runs-on: ubuntu-latest
