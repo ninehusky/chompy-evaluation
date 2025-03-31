@@ -34,7 +34,7 @@ jobs:
       - name: Generate Chompy Rules
         run: |
           cd chompy/
-          cargo flamegraph --root --test halide -- --nocapture
+          cargo flamegraph --root -- cargo run -- handwritten "$CHOMPY_EVALUATION_DIR/chompy-rules.txt"
 
       - name: Upload Flamegraph
         uses: actions/upload-artifact@v4
