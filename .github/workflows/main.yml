@@ -20,7 +20,13 @@ jobs:
       - name: Pull & update submodules recursively
         run: |
           git submodule update --init --recursive
-          git submodule update --recursive --remote
+
+       - name: Install latest CMake
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y cmake
+            cmake --version
+            git submodule update --recursive --remote
 
       # should maybe get rid of this.
       - name: Set up Python
