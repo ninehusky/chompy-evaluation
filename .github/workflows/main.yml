@@ -21,14 +21,14 @@ jobs:
         run: |
           git submodule update --init --recursive
 
-    - name: Downgrade CMake
-      run: |
-        sudo apt-get remove --purge --auto-remove cmake
-        sudo apt-get update
-        sudo apt-get install -y wget
-        wget -O cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v3.25.3/cmake-3.25.3-linux-x86_64.tar.gz
-        sudo tar -C /usr/local --strip-components=1 -xzf cmake.tar.gz
-        cmake --version
+      - name: Downgrade CMake
+        run: |
+          sudo apt-get remove --purge --auto-remove cmake
+          sudo apt-get update
+          sudo apt-get install -y wget
+          wget -O cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v3.25.3/cmake-3.25.3-linux-x86_64.tar.gz
+          sudo tar -C /usr/local --strip-components=1 -xzf cmake.tar.gz
+          cmake --version
 
       # should maybe get rid of this.
       - name: Set up Python
