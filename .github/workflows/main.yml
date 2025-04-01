@@ -21,12 +21,14 @@ jobs:
         run: |
           git submodule update --init --recursive
 
-      - name: Install latest CMake
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake
-          cmake --version
-          git submodule update --recursive --remote
+    - name: Downgrade CMake
+      run: |
+        sudo apt-get remove --purge --auto-remove cmake
+        sudo apt-get update
+        sudo apt-get install -y wget
+        wget -O cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v3.25.3/cmake-3.25.3-linux-x86_64.tar.gz
+        sudo tar -C /usr/local --strip-components=1 -xzf cmake.tar.gz
+        cmake --version
 
       # should maybe get rid of this.
       - name: Set up Python
@@ -39,9 +41,6 @@ jobs:
 
       - name: Generate Chompy Rules
         run: |
-          mkdir -p $HOME/cmake
-          echo 'set(CMAKE_POLICY_VERSION_MINIMUM 3.5)' > $HOME/cmake/Policy.cmake
-          export CMAKE_FLAGS="-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
           cd chompy/
           cargo flamegraph --root -- cargo run -- handwritten "$CHOMPY_EVALUATION_DIR/chompy/chompy-rules.txt"
 
