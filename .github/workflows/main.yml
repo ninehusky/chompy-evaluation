@@ -39,6 +39,9 @@ jobs:
 
       - name: Generate Chompy Rules
         run: |
+          mkdir -p $HOME/cmake
+          echo 'set(CMAKE_POLICY_VERSION_MINIMUM 3.5)' > $HOME/cmake/Policy.cmake
+          export CMAKE_FLAGS="-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
           cd chompy/
           cargo flamegraph --root -- cargo run -- handwritten "$CHOMPY_EVALUATION_DIR/chompy/chompy-rules.txt"
 
