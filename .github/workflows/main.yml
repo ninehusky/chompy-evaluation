@@ -21,6 +21,9 @@ jobs:
         run: |
           git submodule update --init --recursive
 
+      - name: Debug List all files in chompy
+        run: ls -Rla chompy/
+
       - name: Downgrade CMake
         run: |
           sudo apt-get remove --purge --auto-remove cmake
