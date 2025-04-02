@@ -191,7 +191,7 @@ fn caviar_comparison(expr_path: PathBuf, chompy_ruleset: &Ruleset) -> Vec<Rulese
     let mut results: Vec<RulesetComparisonResult> = Vec::new();
     let exprs = caviar::io::reader::read_expressions(&expr_path.into());
     let caviar_ruleset = Ruleset::new(RulesetTag::CaviarAll);
-    let default_limits = (100000, 100000, 60.0);
+    let default_limits = (100000, 100000, 30.0);
     for expr_struct in exprs.unwrap().iter() {
         let caviar_res = caviar::trs::prove_pulses_npp(
             expr_struct.index,
