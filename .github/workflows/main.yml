@@ -43,7 +43,7 @@ jobs:
       - name: Generate Chompy Rules
         run: |
           cd chompy/
-          cargo build
+          cargo +stable build
           cargo run --release -- ${{ matrix.args }}
 
       - name: Upload Flamegraph
