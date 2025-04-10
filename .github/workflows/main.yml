@@ -20,6 +20,8 @@ jobs:
           - '--mode handwritten --old-recipe-type og_recipe_no_conditions --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
     steps:
       - uses: actions/checkout@v2
+      - uses: dtolnay/rust-toolchain@stable
+
       - name: Pull & update submodules recursively
         run: git submodule update --init --recursive
 
@@ -60,6 +62,7 @@ jobs:
       CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v2
+      - uses: dtolnay/rust-toolchain@stable
       - name: Pull & update submodules recursively
         run: git submodule update --init --recursive
 
@@ -101,6 +104,7 @@ jobs:
       CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v2
+      - uses: dtolnay/rust-toolchain@stable
       - name: Pull & update submodules recursively
         run: git submodule update --init --recursive
 
