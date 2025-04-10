@@ -161,7 +161,7 @@ fn derivability_check(ruleset_path: PathBuf, against_path: PathBuf) -> Derivabil
         ruler::DeriveType::LhsAndRhs,
         &against,
         ruler::Limits::deriving(),
-        &Some(conditional_prop_rules),
+        Some(conditional_prop_rules.as_ref()),
     );
 
     let can: Vec<String> = can.into_iter().map(|r| r.0.to_string()).collect();
