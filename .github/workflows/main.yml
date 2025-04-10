@@ -20,11 +20,7 @@ jobs:
           - '--mode handwritten --old-recipe-type og_recipe_no_conditions --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
     steps:
       - uses: actions/checkout@v2
-
-      - name: Set up Rust 1.70
-        uses: actions/setup-rust@v1
-        with:
-          rust-version: 1.70.0  # Specify the version of Rust required
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
 
       - name: Pull & update submodules recursively
         run: git submodule update --init --recursive
@@ -66,7 +62,7 @@ jobs:
       CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v2
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Pull & update submodules recursively
         run: git submodule update --init --recursive
 
@@ -108,7 +104,7 @@ jobs:
       CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v2
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Pull & update submodules recursively
         run: git submodule update --init --recursive
 
