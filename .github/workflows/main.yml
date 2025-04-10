@@ -38,7 +38,7 @@ jobs:
       - name: Generate Chompy Rules
         run: |
           cd chompy/
-          cargo flamegraph --root -- ${{ matrix.args }}
+          cargo run -- ${{ matrix.args }}
 
       - name: Upload Flamegraph
         uses: actions/upload-artifact@v4
