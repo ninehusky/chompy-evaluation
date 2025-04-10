@@ -39,19 +39,19 @@ jobs:
         with:
           python-version: '3.10'
 
-      # - name: Install Flamegraph
-      #   run: cargo install flamegraph
+      - name: Install Flamegraph
+        run: cargo install flamegraph
 
       - name: Generate Chompy Rules
         run: |
           cd chompy/
           cargo run --bin ruler -- handwritten "$CHOMPY_EVALUATION_DIR/chompy/chompy-rules.txt"
 
-      # - name: Upload Flamegraph
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: flamegraph
-      #     path: chompy/flamegraph.svg
+      - name: Upload Flamegraph
+        uses: actions/upload-artifact@v4
+        with:
+          name: flamegraph
+          path: chompy/flamegraph.svg
 
       - name: Upload Chompy Rules
         uses: actions/upload-artifact@v4
