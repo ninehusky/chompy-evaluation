@@ -156,12 +156,11 @@ fn derivability_check(ruleset_path: PathBuf, against_path: PathBuf) -> Derivabil
     println!("conditions: {:#?}", conditions.len());
 
     let conditional_prop_rules = ruler::halide::Pred::get_condition_propogation_rules(&cond_wkld);
-    println!("made it here");
     let (can, cannot) = ruleset.derive(
         ruler::DeriveType::LhsAndRhs,
         &against,
         ruler::Limits::deriving(),
-        &Some(conditional_prop_rules),
+        Some(conditional_prop_rules.as_ref()),
     );
 
     let can: Vec<String> = can.into_iter().map(|r| r.0.to_string()).collect();

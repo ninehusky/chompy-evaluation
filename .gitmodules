@@ -1,6 +1,8 @@
 [submodule "caviar"]
 	path = caviar
 	url = https://github.com/ninehusky/caviar.git
+	branch = "main"
 [submodule "chompy"]
 	path = chompy
 	url = https://github.com/ninehusky/chompy.git
+	branch = "main"
