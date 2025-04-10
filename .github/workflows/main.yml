@@ -6,6 +6,7 @@ on:
       - '**'
   schedule:  # Runs nightly at 1 AM PST
     - cron: '0 9 * * *'  # 1 AM PST = 9 AM UTC
+  workflow_dispatch:
 
 jobs:
   evaluation:
