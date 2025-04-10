@@ -82,9 +82,9 @@ def parse_condition(cond: str) -> str:
                 case "<=a":
                     return f"(<= {args[0]} (abs {args[1]}))"
                 case "<=-a":
-                    return f"(<= {args[0]} (- (abs {args[1]})))"
+                    return f"(<= {args[0]} (- 0 (abs {args[1]})))"
                 case "<=-a+1":
-                    return f"(<= {args[0]} (- (abs (+ {args[1]} 1))))"
+                    return f"(<= {args[0]} (- 0 (abs (+ {args[1]} 1))))"
                 case ">":
                     return f"(> {args[0]} {args[1]})"
                 case ">a":

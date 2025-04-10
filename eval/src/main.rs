@@ -14,6 +14,7 @@ enum EvalMode {
     DerivabilityComparison,
     Eggsplain,
     Verify,
+    ValidateCaviar,
 }
 
 impl From<String> for EvalMode {
@@ -23,6 +24,7 @@ impl From<String> for EvalMode {
             "derivability" => EvalMode::DerivabilityComparison,
             "verify" => EvalMode::Verify,
             "eggsplain" => EvalMode::Eggsplain,
+            "validate-caviar" => EvalMode::ValidateCaviar,
             _ => panic!("Invalid mode: {}", s),
         }
     }
@@ -97,8 +99,10 @@ fn main() {
             let against_path = args.other_ruleset_path.unwrap();
             let output_path = args.derivability_output_path.unwrap();
             let first_direction = derivability_check(ruleset_path.clone(), against_path.clone());
-            let second_direction = derivability_check(against_path, ruleset_path);
-            write_derivability_results_to_json(&output_path, &first_direction, &second_direction);
+            println!("results: {:#?}", first_direction);
+            // let second_direction = derivability_check(against_path, ruleset_path);
+            // TODO: undo
+            write_derivability_results_to_json(&output_path, &first_direction, &first_direction);
         }
         EvalMode::Eggsplain => {
             let dataset_path = args.dataset_path.unwrap();
@@ -114,6 +118,9 @@ fn main() {
         EvalMode::Verify => {
             let dataset_path = args.dataset_path.unwrap();
             verify_expressions(dataset_path);
+        }
+        EvalMode::ValidateCaviar => {
+            validate_caviar();
         }
     }
 }
@@ -156,12 +163,13 @@ fn derivability_check(ruleset_path: PathBuf, against_path: PathBuf) -> Derivabil
     println!("conditions: {:#?}", conditions.len());
 
     let conditional_prop_rules = ruler::halide::Pred::get_condition_propogation_rules(&cond_wkld);
+
     println!("made it here");
     let (can, cannot) = ruleset.derive(
         ruler::DeriveType::LhsAndRhs,
         &against,
         ruler::Limits::deriving(),
-        &Some(conditional_prop_rules),
+        Some(conditional_prop_rules.as_ref()),
     );
 
     let can: Vec<String> = can.into_iter().map(|r| r.0.to_string()).collect();
@@ -355,4 +363,174 @@ fn write_derivability_results_to_json(
         "backwards": to_json(backwards_result),
     });
     std::fs::write(output_path, json.to_string()).unwrap();
+}
+
+fn validate_caviar() {
+    let caviar_rules = r#"
+(== ?x ?y) ==> (== ?y ?x)
+(== ?x ?y) ==> (== (- ?x ?y) 0)
+(== (+ ?x ?y) ?z) ==> (== ?x (- ?z ?y))
+(== ?x ?x) ==> 1
+(== (* ?x ?y) 0) ==> (|| (== ?x 0) (== ?y 0))
+( == (max ?x ?y) ?y) ==> (<= ?x ?y)
+( == (min ?x ?y) ?y) ==> (<= ?y ?x)
+(<= ?y ?x) ==> ( == (min ?x ?y) ?y)
+(== (* ?a ?x) ?b) ==> 0 if (&& (!= ?a 0) (!= (% ?b ?a) 0))
+(== (max ?x ?c) 0) ==> 0 if (> ?c 0)
+(== (max ?x ?c) 0) ==> (== ?x 0) if (< ?c 0)
+(== (min ?x ?c) 0) ==> 0 if (< ?c 0)
+(== (min ?x ?c) 0) ==> (== ?x 0) if (> ?c 0)
+(|| ?x ?y) ==> (! (&& (! ?x) (! ?y)))
+(|| ?y ?x) ==> (|| ?x ?y)
+(+ ?a ?b) ==> (+ ?b ?a)
+(+ ?a (+ ?b ?c)) ==> (+ (+ ?a ?b) ?c)
+(+ ?a 0) ==> ?a
+(* ?a (+ ?b ?c)) ==> (+ (* ?a ?b) (* ?a ?c))
+(+ (* ?a ?b) (* ?a ?c)) ==> (* ?a (+ ?b ?c))
+(+ (/ ?a ?b) ?c) ==> (/ (+ ?a (* ?b ?c)) ?b)
+(/ (+ ?a (* ?b ?c)) ?b) ==> (+ (/ ?a ?b) ?c)
+( + ( / ?x 2 ) ( % ?x 2 ) ) ==> ( / ( + ?x 1 ) 2 )
+( + (* ?x ?a) (* ?y ?b)) ==> ( * (+ (* ?x (/ ?a ?b)) ?y) ?b) if (&& (!= ?b 0) (== (% ?a ?b) 0))
+(/ 0 ?x) ==> 0
+(/ ?a ?a) ==> 1 if (!= ?a 0)
+(/ (* -1 ?a) ?b) ==> (/ ?a (* -1 ?b))
+(/ ?a (* -1 ?b)) ==> (/ (* -1 ?a) ?b)
+(* -1 (/ ?a ?b)) ==> (/ (* -1 ?a) ?b)
+(/ (* -1 ?a) ?b) ==> (* -1 (/ ?a ?b))
+( / ( * ?x ?a ) ?b ) ==> ( / ?x ( / ?b ?a ) ) if (&& (> ?a 0) (== (% ?b ?a) 0))
+( / ( * ?x ?a ) ?b ) ==> ( * ?x ( / ?a ?b ) ) if (&& (> ?b 0) (== (% ?a ?b) 0))
+( / ( + ( * ?x ?a ) ?y ) ?b ) ==> ( + ( * ?x ( / ?a ?b ) ) ( / ?y ?b ) ) if (&& (> ?b 0) (== (% ?a ?b) 0))
+( / ( + ?x ?a ) ?b ) ==> ( + ( / ?x ?b ) ( / ?a ?b ) ) if (&& (> ?b 0) (== (% ?a ?b) 0))
+(!= ?x ?y) ==> (! (== ?x ?y))
+(max ?a ?b) ==> (* -1 (min (* -1 ?a) (* -1 ?b)))
+(&& ?y ?x) ==> (&& ?x ?y)
+(&& ?a (&& ?b ?c)) ==> (&& (&& ?a ?b) ?c)
+(&& 1 ?x) ==> ?x
+(&& ?x ?x) ==> ?x
+(&& ?x (! ?x)) ==> 0
+( && ( == ?x ?c0 ) ( == ?x ?c1 ) ) ==> 0 if (!= ?c1 ?c0)
+( && ( != ?x ?c0 ) ( == ?x ?c1 ) ) ==> ( == ?x ?c1 ) if (!= ?c1 ?c0)
+(&& (< ?x ?y) (< ?x ?z)) ==> (< ?x (min ?y ?z))
+(< ?x (min ?y ?z)) ==> (&& (< ?x ?y) (< ?x ?z))
+(&& (<= ?x ?y) (<= ?x ?z)) ==> (<= ?x (min ?y ?z))
+(<= ?x (min ?y ?z)) ==> (&& (<= ?x ?y) (<= ?x ?z))
+(&& (< ?y ?x) (< ?z ?x)) ==> (< (max ?y ?z) ?x)
+(> ?x (max ?y ?z)) ==> (&& (< ?z ?x) (< ?y ?x))
+(&& (<= ?y ?x) (<= ?z ?x)) ==> (<= (max ?y ?z) ?x)
+(>= ?x (max ?y ?z)) ==> (&& (<= ?z ?x) (<= ?y ?x))
+( && ( < ?c0 ?x ) ( < ?x ?c1 ) ) ==> 0 if (<= ?c1 (+ ?c0 1))
+( && ( <= ?c0 ?x ) ( <= ?x ?c1 ) ) ==> 0 if (< ?c1 ?c0)
+( && ( <= ?c0 ?x ) ( < ?x ?c1 ) ) ==> 0 if (<= ?c1 ?c0)
+(&& ?a (|| ?b ?c)) ==> (|| (&& ?a ?b) (&& ?a ?c))
+(|| ?a (&& ?b ?c)) ==> (&& (|| ?a ?b) (|| ?a ?c))
+(|| ?x (&& ?x ?y)) ==> ?x
+(- ?a ?b) ==> (+ ?a (* -1 ?b))
+(* ?a ?b) ==> (* ?b ?a)
+(* ?a (* ?b ?c)) ==> (* (* ?a ?b) ?c)
+(* ?a 0) ==> 0
+(* ?a 1) ==> ?a
+(* (/ ?a ?b) ?b) ==> (- ?a (% ?a ?b))
+(* (max ?a ?b) (min ?a ?b)) ==> (* ?a ?b)
+(/ (* ?y ?x) ?x) ==> ?y
+(<= ?x ?y) ==> (! (< ?y ?x))
+(! (< ?y ?x)) ==> (<= ?x ?y)
+(>= ?x ?y) ==> (! (< ?x ?y))
+(! (== ?x ?y)) ==> (!= ?x ?y)
+(! (! ?x)) ==> ?x
+(> ?x ?z) ==> (< ?z ?x)
+(< ?x ?y) ==> (< (* -1 ?y) (* -1 ?x))
+(< ?a ?a) ==> 0
+(< (+ ?x ?y) ?z) ==> (< ?x (- ?z ?y))
+(< ?z (+ ?x ?y)) ==> (< (- ?z ?y) ?x)
+(< (- ?a ?y) ?a ) ==> 1 if (> ?y 0)
+(< 0 ?y ) ==> 1 if (> ?y 0)
+(< ?y 0 ) ==> 1 if (< ?y 0)
+( < ( min ?x ?y ) ?x ) ==> ( < ?y ?x )
+( < ( min ?z ?y ) ( min ?x ?y ) ) ==> ( < ?z ( min ?x ?y ) )
+( < ( max ?z ?y ) ( max ?x ?y ) ) ==> ( < ( max ?z ?y ) ?x )
+( < ( min ?z ?y ) ( min ?x ( + ?y ?c0 ) ) ) ==> ( < ( min ?z ?y ) ?x ) if (> ?c0 0)
+( < ( max ?z ( + ?y ?c0 ) ) ( max ?x ?y ) ) ==> ( < ( max ?z ( + ?y ?c0 ) ) ?x ) if (> ?c0 0)
+( < ( min ?z ( + ?y ?c0 ) ) ( min ?x ?y ) ) ==> ( < ( min ?z ( + ?y ?c0 ) ) ?x ) if (< ?c0 0)
+( < ( max ?z ?y ) ( max ?x ( + ?y ?c0 ) ) ) ==> ( < ( max ?z ?y ) ?x ) if (< ?c0 0)
+( < ( min ?x ?y ) (+ ?x ?c0) ) ==> 1 if (> ?c0 0)
+(< (max ?a ?c) (min ?a ?b)) ==> 0
+(< (* ?x ?y) ?z) ==> (< ?x ( / (- ( + ?z ?y ) 1 ) ?y ) )) if (> ?y 0)
+(< ?y (/ ?x ?z)) ==> ( < ( - ( * ( + ?y 1 ) ?z ) 1 ) ?x ) if (> ?z 0)
+(< ?a (% ?x ?b)) ==> 1 if (<= ?a (- (abs ?b)))
+(< ?a (% ?x ?b)) ==> 0 if (>= ?a (abs ?b))
+(min ?a ?b) ==> (min ?b ?a)
+(min (min ?x ?y) ?z) ==> (min ?x (min ?y ?z))
+(min ?x ?x) ==> ?x
+(min (max ?x ?y) ?x) ==> ?x
+(min (max ?x ?y) (max ?x ?z)) ==> (max (min ?y ?z) ?x)
+(min (max (min ?x ?y) ?z) ?y) ==> (min (max ?x ?z) ?y)
+(min (+ ?a ?b) ?c) ==> (+ (min ?b (- ?c ?a)) ?a)
+(+ (min ?x ?y) ?z) ==> (min (+ ?x ?z) (+ ?y ?z))
+(min ?x (+ ?x ?a)) ==> ?x if (> ?a 0)
+(min ?x (+ ?x ?a)) ==> (+ ?x ?a) if (< ?a 0)
+(* (min ?x ?y) ?z) ==> (min (* ?x ?z) (* ?y ?z)) if (> ?z 0)
+(min (* ?x ?z) (* ?y ?z)) ==> (* (min ?x ?y) ?z) if (> ?z 0)
+(* (min ?x ?y) ?z) ==> (max (* ?x ?z) (* ?y ?z)) if (< ?z 0)
+(max (* ?x ?z) (* ?y ?z)) ==> (* (min ?x ?y) ?z) if (< ?z 0)
+(/ (min ?x ?y) ?z) ==> (min (/ ?x ?z) (/ ?y ?z)) if (> ?z 0)
+(min (/ ?x ?z) (/ ?y ?z)) ==> (/ (min ?x ?y) ?z) if (> ?z 0)
+(/ (max ?x ?y) ?z) ==> (min (/ ?x ?z) (/ ?y ?z)) if (< ?z 0)
+(min (/ ?x ?z) (/ ?y ?z)) ==> (/ (max ?x ?y) ?z) if (< ?z 0)
+( min ( max ?x ?c0 ) ?c1 ) ==> ?c1 if (<= ?c1 ?c0)
+( min ( * ( / ?x ?c0 ) ?c0 ) ?x ) ==> ( * ( / ?x ?c0 ) ?c0 ) if (> ?c0 0)
+(min (% ?x ?c0) ?c1) ==> (% ?x ?c0) if (>= ?c1 (- (abs ?c0) 1))
+(min (% ?x ?c0) ?c1) ==> ?c1 if (<= ?c1 (- (abs (+ ?c0 1))))
+( min ( max ?x ?c0 ) ?c1 ) ==> ( max ( min ?x ?c1 ) ?c0 ) if (<= ?c0 ?c1)
+( max ( min ?x ?c1 ) ?c0 ) ==> ( min ( max ?x ?c0 ) ?c1 ) if (<= ?c0 ?c1)
+( < ( min ?y ?c0 ) ?c1 ) ==> ( || ( < ?y ?c1 ) ( < ?c0 ?c1 ) )
+( < ( max ?y ?c0 ) ?c1 ) ==> ( && ( < ?y ?c1 ) ( < ?c0 ?c1 ) )
+( < ?c1 ( max ?y ?c0 ) ) ==> ( || ( < ?c1 ?y ) ( < ?c1 ?c0 ) )
+( min ( * ?x ?a ) ?b ) ==> ( * ( min ?x ( / ?b ?a ) ) ?a ) if (&& (> ?a 0) (== (% ?b ?a) 0))
+( min ( * ?x ?a ) ( * ?y ?b ) ) ==> ( * ( min ?x ( * ?y ( / ?b ?a ) ) ) ?a ) if (&& (> ?a 0) (== (% ?b ?a) 0))
+( min ( * ?x ?a ) ?b ) ==> ( * ( max ?x ( / ?b ?a ) ) ?a ) if (&& (< ?a 0) (== (% ?b ?a) 0))
+( min ( * ?x ?a ) ( * ?y ?b ) ) ==> ( * ( max ?x ( * ?y ( / ?b ?a ) ) ) ?a ) if (&& (< ?a 0) (== (% ?b ?a) 0))
+(% 0 ?x) ==> 0
+(% ?x ?x) ==> 0
+(% ?x 1) ==> 0
+(% ?x ?c1) ==> (% (+ ?x ?c1) ?c1) if (<= ?c1 (abs ?x))
+(% ?x ?c1) ==> (% (- ?x ?c1) ?c1) if (<= ?c1 (abs ?x))
+(% (* ?x -1) ?c) ==> (* -1 (% ?x ?c))
+(* -1 (% ?x ?c)) ==> (% (* ?x -1) ?c)
+(% (- ?x ?y) 2) ==> (% (+ ?x ?y) 2)
+( % ( + ( * ?x ?c0 ) ?y ) ?c1 ) ==> ( % ?y ?c1 ) if (&& (!= ?c1 0) (== (% ?c0 ?c1) 0))
+(% (* ?c0 ?x) ?c1) ==> 0 if (&& (!= ?c1 0) (== (% ?c0 ?c1) 0))
+"#;
+
+    let mut invalid_rules_count = 0;
+    let mut unknown_rules_count = 0;
+    let mut total_rules = 0;
+    for line in caviar_rules.lines() {
+        if line.is_empty() {
+            continue;
+        }
+        let (fw, bw): (Rule<Pred>, Option<Rule<Pred>>) = Rule::from_string(line).unwrap();
+        total_rules += 1;
+        assert!(bw.is_none());
+
+        let validity = if fw.cond.is_some() {
+            Pred::validate_with_cond(&fw.lhs, &fw.rhs, &fw.cond.clone().unwrap())
+        } else {
+            Pred::validate(&fw.lhs, &fw.rhs)
+        };
+
+        match validity {
+            ValidationResult::Invalid => {
+                println!("Invalid rule: {}", line);
+                invalid_rules_count += 1;
+            }
+            ValidationResult::Unknown => {
+                unknown_rules_count += 1;
+            }
+            _ => (),
+        }
+    }
+    println!(
+        "out of {} rules, {} are unknown, {} are invalid",
+        total_rules, unknown_rules_count, invalid_rules_count
+    );
 }

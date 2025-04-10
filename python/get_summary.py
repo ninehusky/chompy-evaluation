@@ -39,10 +39,19 @@ if __name__ == '__main__':
 
             if "Goal 0" in caviar_stop_reason and result['z3_result'] != "invalid":
                 caviar_inconsistencies['Goal 0'] = caviar_inconsistencies.get('Goal 0', 0) + 1
+                print("expr: ", result['expression'])
+                print("their stop reason:", caviar_stop_reason)
+                print("z3 result: ", result['z3_result'])
             elif "Goal 1" in caviar_stop_reason and result['z3_result'] != "valid":
                 caviar_inconsistencies['Goal 1'] = caviar_inconsistencies.get('Goal 1', 0) + 1
+                print("expr: ", result['expression'])
+                print("their stop reason:", caviar_stop_reason)
+                print("z3 result: ", result['z3_result'])
             elif "Impossible" in caviar_stop_reason and result['z3_result'] != "unknown":
                 caviar_inconsistencies['Unknown'] = caviar_inconsistencies.get('Unknown', 0) + 1
+                print("expr: ", result['expression'])
+                print("their stop reason:", caviar_stop_reason)
+                print("z3 result: ", result['z3_result'])
 
             if "Goal 0" in chompy_stop_reason and "Goal 1" in caviar_stop_reason or "Goal 1" in chompy_stop_reason and "Goal 0" in caviar_stop_reason or \
                     "Goal" in chompy_stop_reason and "Impossible" in caviar_stop_reason or "Impossible" in chompy_stop_reason and "Goal" in caviar_stop_reason:
