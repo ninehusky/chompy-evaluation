@@ -44,7 +44,7 @@ jobs:
         run: |
           cd chompy/
           cargo +stable build
-          cargo run --release -- ${{ matrix.args }}
+          cargo +stable run --release -- ${{ matrix.args }}
 
       - name: Upload Flamegraph
         uses: actions/upload-artifact@v4
