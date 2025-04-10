@@ -41,9 +41,10 @@ jobs:
         run: cargo install flamegraph
 
       - name: Generate Chompy Rules
+        env:
+           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           cd chompy/
-          cargo +stable build
           cargo +stable run --release -- ${{ matrix.args }}
 
       - name: Upload Flamegraph
