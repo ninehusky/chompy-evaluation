@@ -14,10 +14,12 @@ jobs:
       CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
     strategy:
       matrix:
-        args:
-          # - '--mode llm_alphabet_soup --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
-          - '--mode handwritten --old-recipe-type og_recipe --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
-          - '--mode handwritten --old-recipe-type og_recipe_no_conditions --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
+        config:
+          - name: handwritten_og
+            args: '--mode handwritten --old-recipe-type og_recipe_no_conditions'
+          - name: handwritten_new
+            args: '--mode handwritten --old-recipe-type new_recipe_with_conditions'
+
     steps:
       - uses: actions/checkout@v2
       - uses: dtolnay/rust-toolchain@stable
@@ -51,18 +53,18 @@ jobs:
            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           cd chompy/
-          cargo +stable run --release -- ${{ matrix.args }}
+          cargo +stable run --release -- ${{ matrix.config.args }}
 
       - name: Upload Flamegraph
         uses: actions/upload-artifact@v4
         with:
-          name: flamegraph-${{ matrix.args }}
+          name: flamegraph-${{ matrix.config.args }}
           path: chompy/flamegraph.svg
 
       - name: Upload Chompy Rules
         uses: actions/upload-artifact@v4
         with:
-          name: chompy-rules-${{ matrix.args }}
+          name: chompy-rules-${{ matrix.config.name }}
           path: ${{ env.CHOMPY_EVALUATION_DIR }}/chompy/chompy-rules.txt
 
   caviar:
@@ -70,10 +72,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        args:
-          # - '--mode llm_alphabet_soup --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
-          - '--mode handwritten --old-recipe-type og_recipe --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
-          - '--mode handwritten --old-recipe-type og_recipe_no_conditions --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
+        config:
+          - name: handwritten_og
+            args: '--mode handwritten --old-recipe-type og_recipe_no_conditions'
+          - name: handwritten_new
+            args: '--mode handwritten --old-recipe-type new_recipe_with_conditions'
 
     env:
       CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
@@ -86,7 +89,7 @@ jobs:
       - name: Download Chompy Rules
         uses: actions/download-artifact@v4
         with:
-          name: chompy-rules-${{ matrix.args }}
+          name: chompy-rules-${{ matrix.config.name }}
           path: ${{ env.CHOMPY_EVALUATION_DIR }}
 
       - name: Run Caviar vs. Chompy comparison
@@ -100,7 +103,7 @@ jobs:
       - name: Upload Caviar vs. Chompy results
         uses: actions/upload-artifact@v4
         with:
-          name: eval-${{ matrix.args }}
+          name: eval-${{ matrix.config.name }}-vs-caviar
           path: ${{ env.CHOMPY_EVALUATION_DIR }}/eval/chompyvscaviar.json
 
       - name: Generate summary of results
@@ -111,7 +114,7 @@ jobs:
       - name: Upload Caviar vs. Chompy summary
         uses: actions/upload-artifact@v4
         with:
-          name: eval-${{ matrix.args }}
+          name: eval-${{ matrix.config.name }}-summary
           path: ${{ env.CHOMPY_EVALUATION_DIR }}/python/caviarsummary.txt
 
   derivability:
@@ -119,10 +122,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        args:
-          # - '--mode llm_alphabet_soup --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
-          - '--mode handwritten --old-recipe-type og_recipe --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
-          - '--mode handwritten --old-recipe-type og_recipe_no_conditions --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
+        config:
+          - name: handwritten_og
+            args: '--mode handwritten --old-recipe-type og_recipe_no_conditions'
+          - name: handwritten_new
+            args: '--mode handwritten --old-recipe-type new_recipe_with_conditions'
 
     env:
       CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
@@ -135,7 +139,7 @@ jobs:
       - name: Download Chompy Rules
         uses: actions/download-artifact@v4
         with:
-          name: chompy-rules-${{ matrix.args }}
+          name: chompy-rules-${{ matrix.config.name }}
           path: ${{ env.CHOMPY_EVALUATION_DIR }}
 
       - name: Generate Caviar rules
@@ -154,5 +158,5 @@ jobs:
       - name: Upload derivability check results
         uses: actions/upload-artifact@v4
         with:
-          name: chompy-vs-caviar-derivability-${{ matrix.args }}
+          name: chompy-vs-caviar-derivability-${{ matrix.config.args }}
           path: ${{ env.CHOMPY_EVALUATION_DIR }}/derive-results.json
