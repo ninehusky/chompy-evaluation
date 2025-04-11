@@ -16,8 +16,8 @@ jobs:
     strategy:
       matrix:
         config:
-          - name: chatgpt
-            args: '--mode llm_alphabet_soup'
+          # - name: chatgpt
+          #   args: '--mode llm_alphabet_soup'
           - name: handwritten_og_no_cond
             args: '--mode handwritten --old-recipe-type og_recipe_no_conditions'
           - name: handwritten_og
