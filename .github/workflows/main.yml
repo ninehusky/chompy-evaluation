@@ -40,6 +40,12 @@ jobs:
       - name: Install Flamegraph
         run: cargo install flamegraph
 
+      - name: Check API key length (safe)
+        run: |
+          echo "Key length: ${#OPENAI_API_KEY}"
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
       - name: Generate Chompy Rules
         env:
            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
