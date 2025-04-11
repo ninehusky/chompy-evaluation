@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         args:
-          - '--mode llm_alphabet_soup --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
+          # - '--mode llm_alphabet_soup --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
           - '--mode handwritten --old-recipe-type og_recipe --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
           - '--mode handwritten --old-recipe-type og_recipe_no_conditions --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
     steps:
@@ -71,7 +71,7 @@ jobs:
     strategy:
       matrix:
         args:
-          - '--mode llm_alphabet_soup --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
+          # - '--mode llm_alphabet_soup --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
           - '--mode handwritten --old-recipe-type og_recipe --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
           - '--mode handwritten --old-recipe-type og_recipe_no_conditions --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
 
@@ -120,7 +120,7 @@ jobs:
     strategy:
       matrix:
         args:
-          - '--mode llm_alphabet_soup --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
+          # - '--mode llm_alphabet_soup --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
           - '--mode handwritten --old-recipe-type og_recipe --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
           - '--mode handwritten --old-recipe-type og_recipe_no_conditions --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
 
