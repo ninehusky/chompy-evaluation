@@ -9,12 +9,15 @@ on:
 
 jobs:
   evaluation:
+    environment: eval
     runs-on: ubuntu-latest
     env:
       CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
     strategy:
       matrix:
         config:
+          - name: chatgpt
+            args: '--mode llm_alphabet_soup'
           - name: handwritten_og
             args: '--mode handwritten --old-recipe-type og_recipe_no_conditions'
           - name: handwritten_new
