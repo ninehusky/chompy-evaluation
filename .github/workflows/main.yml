@@ -62,6 +62,13 @@ jobs:
   caviar:
     needs: evaluation
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        args:
+          - '--mode llm_alphabet_soup --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
+          - '--mode handwritten --old-recipe-type og_recipe --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
+          - '--mode handwritten --old-recipe-type og_recipe_no_conditions --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
+
     env:
       CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
     steps:
@@ -104,6 +111,13 @@ jobs:
   derivability:
     needs: evaluation
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        args:
+          - '--mode llm_alphabet_soup --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
+          - '--mode handwritten --old-recipe-type og_recipe --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
+          - '--mode handwritten --old-recipe-type og_recipe_no_conditions --output-path "${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"'
+
     env:
       CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
     steps:
