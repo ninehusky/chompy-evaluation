@@ -53,7 +53,7 @@ jobs:
            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           cd chompy/
-          cargo +stable run --release -- ${{ matrix.config.args }}
+          cargo +stable run --release -- ${{ matrix.config.args }} --output_path ${{ env.CHOMPY_EVALUATION_DIR }}/chompy/chompy-rules.txt
 
       - name: Upload Flamegraph
         uses: actions/upload-artifact@v4
