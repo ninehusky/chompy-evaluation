@@ -18,10 +18,10 @@ jobs:
         config:
           - name: chatgpt
             args: '--mode llm_alphabet_soup'
-          - name: handwritten_og
+          - name: handwritten_og_no_cond
             args: '--mode handwritten --old-recipe-type og_recipe_no_conditions'
-          - name: handwritten_new
-            args: '--mode handwritten --old-recipe-type new_recipe_with_conditions'
+          - name: handwritten_og
+            args: '--mode handwritten --old-recipe-type og_recipe'
 
     steps:
       - uses: actions/checkout@v2
