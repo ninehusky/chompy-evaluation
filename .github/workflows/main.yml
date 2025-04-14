@@ -66,9 +66,9 @@ jobs:
           # - name: chatgpt
           #   args: '--mode llm_alphabet_soup'
           - name: handwritten_og_no_cond
-            args: "--mode handwritten --old-recipe-type og_recipe_no_conditions ${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"
+            args: "--mode handwritten --old-recipe-type og_recipe_no_conditions --output-path ${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"
           - name: handwritten_og
-            args: "--mode handwritten --old-recipe-type og_recipe ${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"
+            args: "--mode handwritten --old-recipe-type og_recipe --output-path ${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"
 
     steps:
       - uses: actions/checkout@v2
@@ -139,9 +139,7 @@ jobs:
           # - name: chatgpt
           #   args: '--mode llm_alphabet_soup'
           - name: handwritten_og_no_cond
-            args: '--mode handwritten --old-recipe-type og_recipe_no_conditions'
           - name: handwritten_og
-            args: '--mode handwritten --old-recipe-type og_recipe'
 
     env:
       CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
@@ -203,9 +201,7 @@ jobs:
           # - name: chatgpt
           #   args: '--mode llm_alphabet_soup'
           - name: handwritten_og_no_cond
-            args: '--mode handwritten --old-recipe-type og_recipe_no_conditions'
           - name: handwritten_og
-            args: '--mode handwritten --old-recipe-type og_recipe'
 
     env:
       CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
@@ -246,5 +242,5 @@ jobs:
       - name: Upload derivability check results
         uses: actions/upload-artifact@v4
         with:
-          name: chompy-vs-caviar-derivability-${{ matrix.config.args }}
+          name: chompy-vs-caviar-derivability-${{ matrix.config.name }}
           path: ${{ env.CHOMPY_EVALUATION_DIR }}/derive-results.json
