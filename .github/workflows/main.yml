@@ -8,6 +8,53 @@ on:
     - cron: '0 9 * * *'  # 1 AM PST = 9 AM UTC
 
 jobs:
+  caviar-internal:
+    environment: eval
+    runs-on: ubuntu-latest
+    env:
+      CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          submodules: false  # No need to pull submodules again
+
+      - name: Downgrade CMake
+        run: |
+          sudo apt-get remove --purge --auto-remove cmake
+          sudo apt-get update
+          sudo apt-get install -y wget
+          wget -O cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v3.25.3/cmake-3.25.3-linux-x86_64.tar.gz
+          sudo tar -C /usr/local --strip-components=1 -xzf cmake.tar.gz
+          cmake --version
+
+      - name: Pull & update submodules recursively
+        run: git submodule update --init --recursive
+
+      - name: Run Caviar vs. Caviar (no cond) comparison
+        run: |
+          cd "$CHOMPY_EVALUATION_DIR/eval"
+          cargo run --release -- --eval-mode caviar \
+            --dataset-path "$CHOMPY_EVALUATION_DIR/caviar/data/prefix/evaluation.csv" \
+            --ruleset-comparison-output-path chompyvscaviar.json
+
+      - name: Upload Caviar vs. Chompy results
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-caviar-no-cond-vs-caviar
+          path: ${{ env.CHOMPY_EVALUATION_DIR }}/eval/chompyvscaviar.json
+
+      - name: Generate summary of results
+        run: |
+          cd "$CHOMPY_EVALUATION_DIR/python"
+          python3 get_summary.py --filename "$CHOMPY_EVALUATION_DIR/eval/chompyvscaviar.json" > caviarsummary.txt
+
+      - name: Upload Caviar vs. Chompy summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-caviar-no-cond-vs-caviar-summary
+          path: ${{ env.CHOMPY_EVALUATION_DIR }}/python/caviarsummary.txt
+
   evaluation:
     environment: eval
     runs-on: ubuntu-latest
