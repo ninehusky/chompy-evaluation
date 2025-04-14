@@ -55,7 +55,7 @@ struct CLIArgs {
 #[derive(Debug)]
 struct RulesetComparisonResult {
     expression: String,
-    chompy_result: ResultStructure,
+    other_result: ResultStructure,
     caviar_result: ResultStructure,
     z3_result: ValidationResult,
 }
@@ -63,9 +63,9 @@ struct RulesetComparisonResult {
 #[derive(Debug)]
 struct ExplanationResult {
     expression: String,
-    chompy_result: caviar_new::structs::ResultStructure,
     caviar_result: caviar_new::structs::ResultStructure,
-    chompy_explanation: String,
+    other_result: caviar_new::structs::ResultStructure,
+    other_explanation: String,
     caviar_explanation: String,
     z3_result: ValidationResult,
 }
@@ -84,13 +84,17 @@ fn main() {
     match mode {
         EvalMode::CaviarComparison => {
             let dataset_path = args.dataset_path.unwrap();
-            let chompy_ruleset_path = args.chompy_ruleset_path.unwrap();
+            let chompy_ruleset_path = args.chompy_ruleset_path;
             let output_path = args.ruleset_comparison_output_path.unwrap();
-            let chompy_ruleset = Ruleset::new(RulesetTag::Custom(
-                chompy_ruleset_path.to_str().unwrap().to_string(),
-            ));
-            let results = caviar_comparison(dataset_path, &chompy_ruleset);
-            write_chompy_caviar_results_to_json(output_path, &chompy_ruleset, &results);
+
+            // None means that the comparison should be internal to Caviar
+            let other_ruleset = match chompy_ruleset_path {
+                Some(path) => Ruleset::new(RulesetTag::Custom(path.to_str().unwrap().to_string())),
+                None => Ruleset::new(RulesetTag::CaviarOnlyTotal),
+            };
+
+            let results = caviar_comparison(dataset_path, &other_ruleset);
+            write_chompy_caviar_results_to_json(output_path, &other_ruleset, &results);
         }
         EvalMode::DerivabilityComparison => {
             let ruleset_path = args.chompy_ruleset_path.unwrap();
@@ -155,7 +159,7 @@ fn derivability_check(ruleset_path: PathBuf, against_path: PathBuf) -> Derivabil
     let cond_wkld = Workload::new(&conditions);
     println!("conditions: {:#?}", conditions.len());
 
-    let conditional_prop_rules = ruler::halide::Pred::get_condition_propogation_rules(&cond_wkld);
+    let conditional_prop_rules = ruler::halide::Pred::get_condition_propagation_rules(&cond_wkld);
     let (can, cannot) = ruleset.derive(
         ruler::DeriveType::LhsAndRhs,
         &against,
@@ -186,7 +190,7 @@ fn verify_expressions(path: PathBuf) -> Vec<ruler::ValidationResult> {
     results
 }
 
-fn caviar_comparison(expr_path: PathBuf, chompy_ruleset: &Ruleset) -> Vec<RulesetComparisonResult> {
+fn caviar_comparison(expr_path: PathBuf, other_ruleset: &Ruleset) -> Vec<RulesetComparisonResult> {
     let mut results: Vec<RulesetComparisonResult> = Vec::new();
     let exprs = caviar::io::reader::read_expressions(&expr_path.into());
     let caviar_ruleset = Ruleset::new(RulesetTag::CaviarAll);
@@ -201,10 +205,10 @@ fn caviar_comparison(expr_path: PathBuf, chompy_ruleset: &Ruleset) -> Vec<Rulese
             true,
             false,
         );
-        let chompy_res = caviar::trs::prove_pulses_npp(
+        let other_res = caviar::trs::prove_pulses_npp(
             expr_struct.index,
             &expr_struct.expression,
-            chompy_ruleset,
+            other_ruleset,
             0.01,
             default_limits,
             true,
@@ -213,7 +217,7 @@ fn caviar_comparison(expr_path: PathBuf, chompy_ruleset: &Ruleset) -> Vec<Rulese
 
         let res = RulesetComparisonResult {
             expression: expr_struct.expression.clone(),
-            chompy_result: chompy_res,
+            other_result: other_res,
             caviar_result: caviar_res,
             z3_result: ruler::halide::validate_expression(
                 &Sexp::from_str(&expr_struct.expression).unwrap(),
@@ -245,9 +249,9 @@ fn write_eggsplanation_results_to_json(
         .map(|r| {
             serde_json::json!({
                 "expression": r.expression,
-                "chompy_result": r.chompy_result,
+                "other_result": r.other_result,
                 "caviar_result": r.caviar_result,
-                "chompy_explanation": r.chompy_explanation,
+                "other_explanation": r.other_explanation,
                 "caviar_explanation": r.caviar_explanation,
                 "z3_result": validation_result_to_string(&r.z3_result),
             })
@@ -262,7 +266,7 @@ fn write_eggsplanation_results_to_json(
 
 fn write_chompy_caviar_results_to_json(
     output_path: PathBuf,
-    chompy_ruleset: &Ruleset,
+    other_ruleset: &Ruleset,
     results: &[RulesetComparisonResult],
 ) {
     let validation_result_to_string = |res: &ValidationResult| match res {
@@ -270,7 +274,7 @@ fn write_chompy_caviar_results_to_json(
         ValidationResult::Invalid => "invalid",
         ValidationResult::Unknown => "unknown",
     };
-    let ruleset_strings: Vec<String> = chompy_ruleset
+    let ruleset_strings: Vec<String> = other_ruleset
         .rules()
         .iter()
         .map(|r| r.name().to_string())
@@ -281,7 +285,7 @@ fn write_chompy_caviar_results_to_json(
         .map(|r| {
             serde_json::json!({
                 "expression": r.expression,
-                "chompy_result": r.chompy_result,
+                "other_result": r.other_result,
                 "caviar_result": r.caviar_result,
                 "z3_result": validation_result_to_string(&r.z3_result),
             })
@@ -296,7 +300,7 @@ fn write_chompy_caviar_results_to_json(
 
 fn eggsplanations(
     expr_path: PathBuf,
-    chompy_ruleset: &caviar_new::structs::Ruleset,
+    other_ruleset: &caviar_new::structs::Ruleset,
 ) -> Vec<ExplanationResult> {
     let mut results: Vec<ExplanationResult> = Vec::new();
     let exprs = caviar_new::io::reader::read_expressions(&expr_path.into());
@@ -312,10 +316,10 @@ fn eggsplanations(
             false,
             false,
         );
-        let (chompy_res, chompy_explanation) = caviar_new::trs::prove_with_explanation(
+        let (other_res, other_explanation) = caviar_new::trs::prove_with_explanation(
             expr_struct.index,
             &expr_struct.expression,
-            chompy_ruleset,
+            other_ruleset,
             default_limits,
             false,
             false,
@@ -323,9 +327,9 @@ fn eggsplanations(
 
         let res = ExplanationResult {
             expression: expr_struct.expression.clone(),
-            chompy_result: chompy_res,
+            other_result: other_res,
             caviar_result: caviar_res,
-            chompy_explanation,
+            other_explanation,
             caviar_explanation,
             z3_result: ruler::halide::validate_expression(
                 &Sexp::from_str(&expr_struct.expression).unwrap(),
