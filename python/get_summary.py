@@ -10,31 +10,31 @@ if __name__ == '__main__':
 
     with open(args.filename) as f:
         json_data = json.load(f)
-        chompy_successes = 0
+        other_successes = 0
         caviar_successes = 0
-        chompy_inconsistencies = {}
+        other_inconsistencies = {}
         caviar_inconsistencies = {}
         disagreements = 0
 
 
-        chompy_failure_data = {}
-        chompy_failure_caviar_successes = 0
-        caviar_failure_chompy_successes = 0
+        other_failure_data = {}
+        other_failure_caviar_successes = 0
+        caviar_failure_other_successes = 0
         for result in json_data['results']:
-            chompy_stop_reason = result['chompy_result']['stop_reason']
+            other_stop_reason = result['other_result']['stop_reason']
             caviar_stop_reason = result['caviar_result']['stop_reason']
 
-            chompy_success = False
+            other_success = False
             caviar_success = False
 
-            if "Goal 0" in chompy_stop_reason and result['z3_result'].strip() != "invalid":
-                chompy_inconsistencies['Goal 0'] = chompy_inconsistencies.get('Goal 0', 0) + 1
-            elif "Goal 1" in chompy_stop_reason and result['z3_result'].strip() != "valid":
-                chompy_inconsistencies['Goal 1'] = chompy_inconsistencies.get('Goal 1', 0) + 1
-            elif "Impossible" in chompy_stop_reason and result['z3_result'].strip() != "unknown":
-                chompy_inconsistencies['Unknown'] = chompy_inconsistencies.get('Unknown', 0) + 1
+            if "Goal 0" in other_stop_reason and result['z3_result'].strip() != "invalid":
+                other_inconsistencies['Goal 0'] = other_inconsistencies.get('Goal 0', 0) + 1
+            elif "Goal 1" in other_stop_reason and result['z3_result'].strip() != "valid":
+                other_inconsistencies['Goal 1'] = other_inconsistencies.get('Goal 1', 0) + 1
+            elif "Impossible" in other_stop_reason and result['z3_result'].strip() != "unknown":
+                other_inconsistencies['Unknown'] = other_inconsistencies.get('Unknown', 0) + 1
                 print("expr: ", result['expression'])
-                print("our stop reason:", chompy_stop_reason)
+                print("our stop reason:", other_stop_reason)
                 print("z3 result: ", result['z3_result'])
 
             if "Goal 0" in caviar_stop_reason and result['z3_result'] != "invalid":
@@ -44,48 +44,48 @@ if __name__ == '__main__':
             elif "Impossible" in caviar_stop_reason and result['z3_result'] != "unknown":
                 caviar_inconsistencies['Unknown'] = caviar_inconsistencies.get('Unknown', 0) + 1
 
-            if "Goal 0" in chompy_stop_reason and "Goal 1" in caviar_stop_reason or "Goal 1" in chompy_stop_reason and "Goal 0" in caviar_stop_reason or \
-                    "Goal" in chompy_stop_reason and "Impossible" in caviar_stop_reason or "Impossible" in chompy_stop_reason and "Goal" in caviar_stop_reason:
+            if "Goal 0" in other_stop_reason and "Goal 1" in caviar_stop_reason or "Goal 1" in other_stop_reason and "Goal 0" in caviar_stop_reason or \
+                    "Goal" in other_stop_reason and "Impossible" in caviar_stop_reason or "Impossible" in other_stop_reason and "Goal" in caviar_stop_reason:
                 print("expression: ", result['expression'])
-                print("chompy reason: ", chompy_stop_reason)
+                print("other reason: ", other_stop_reason)
                 print("caviar reason: ", caviar_stop_reason)
                 print("z3 result", result['z3_result'])
                 disagreements += 1
 
-            if 'Matched' in chompy_stop_reason or 'Impossible' in chompy_stop_reason:
-                chompy_success = True
-                chompy_successes += 1
+            if 'Matched' in other_stop_reason or 'Impossible' in other_stop_reason:
+                other_success = True
+                other_successes += 1
             else:
-                # chompy failed
-                failure_reason = "Time Limit" if "Time Limit" in chompy_stop_reason else \
-                    "Node Limit" if "Node Limit" in chompy_stop_reason else \
-                    chompy_stop_reason
-                chompy_failure_data[failure_reason] = chompy_failure_data.get(failure_reason, 0) + 1
+                # other failed
+                failure_reason = "Time Limit" if "Time Limit" in other_stop_reason else \
+                    "Node Limit" if "Node Limit" in other_stop_reason else \
+                    other_stop_reason
+                other_failure_data[failure_reason] = other_failure_data.get(failure_reason, 0) + 1
 
 
             if 'Matched' in caviar_stop_reason or 'Impossible' in caviar_stop_reason:
                 caviar_success = True
                 caviar_successes += 1
 
-            if chompy_success and not caviar_success:
-                caviar_failure_chompy_successes += 1
-            elif caviar_success and not chompy_success:
-                chompy_failure_caviar_successes += 1
+            if other_success and not caviar_success:
+                caviar_failure_other_successes += 1
+            elif caviar_success and not other_success:
+                other_failure_caviar_successes += 1
 
 
-        print(f"Chompy successes: {chompy_successes}")
+        print(f"other successes: {other_successes}")
         print(f"Caviar successes: {caviar_successes}")
-        print(f"Chompy failures, Caviar successes: {chompy_failure_caviar_successes}")
-        print(f"Caviar failures, Chompy successes: {caviar_failure_chompy_successes}")
-        print("Chompy failure data:")
-        for reason, count in chompy_failure_data.items():
+        print(f"other failures, Caviar successes: {other_failure_caviar_successes}")
+        print(f"Caviar failures, other successes: {caviar_failure_other_successes}")
+        print("other failure data:")
+        for reason, count in other_failure_data.items():
             print(f"{reason}: {count}")
 
-        if not chompy_inconsistencies:
-            print("No chompy inconsistencies found")
+        if not other_inconsistencies:
+            print("No other inconsistencies found")
         else:
-            print("Chompy inconsistencies:")
-            for goal, count in chompy_inconsistencies.items():
+            print("other inconsistencies:")
+            for goal, count in other_inconsistencies.items():
                 print(f"{goal}: {count}")
 
         if not caviar_inconsistencies:
