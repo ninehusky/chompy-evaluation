@@ -156,7 +156,6 @@ fn derivability_check(ruleset_path: PathBuf, against_path: PathBuf) -> Derivabil
     println!("conditions: {:#?}", conditions.len());
 
     let conditional_prop_rules = ruler::halide::Pred::get_condition_propogation_rules(&cond_wkld);
-    println!("made it here");
     let (can, cannot) = ruleset.derive(
         ruler::DeriveType::LhsAndRhs,
         &against,

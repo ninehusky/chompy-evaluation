@@ -28,7 +28,20 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Pull & update submodules recursively
-        run: git submodule update --init --recursive
+        run: |
+          git submodule update --init --recursive
+
+      - name: Debug List all files in chompy
+        run: ls -Rla chompy/
+
+      - name: Downgrade CMake
+        run: |
+          sudo apt-get remove --purge --auto-remove cmake
+          sudo apt-get update
+          sudo apt-get install -y wget
+          wget -O cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v3.25.3/cmake-3.25.3-linux-x86_64.tar.gz
+          sudo tar -C /usr/local --strip-components=1 -xzf cmake.tar.gz
+          cmake --version
 
       - name: Downgrade CMake
         run: |
@@ -56,7 +69,7 @@ jobs:
            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           cd chompy/
-          cargo +stable run --release -- ${{ matrix.config.args }} --output-path ${{ env.CHOMPY_EVALUATION_DIR }}/chompy/chompy-rules.txt
+          cargo run --bin ruler -- handwritten "$CHOMPY_EVALUATION_DIR/chompy/chompy-rules.txt"
 
       - name: Upload Flamegraph
         uses: actions/upload-artifact@v4
@@ -88,6 +101,18 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          submodules: false  # No need to pull submodules again
+
+      - name: Downgrade CMake
+        run: |
+          sudo apt-get remove --purge --auto-remove cmake
+          sudo apt-get update
+          sudo apt-get install -y wget
+          wget -O cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v3.25.3/cmake-3.25.3-linux-x86_64.tar.gz
+          sudo tar -C /usr/local --strip-components=1 -xzf cmake.tar.gz
+          cmake --version
+
       - name: Pull & update submodules recursively
         run: git submodule update --init --recursive
 
@@ -142,6 +167,15 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Pull & update submodules recursively
         run: git submodule update --init --recursive
+
+      - name: Downgrade CMake
+        run: |
+          sudo apt-get remove --purge --auto-remove cmake
+          sudo apt-get update
+          sudo apt-get install -y wget
+          wget -O cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v3.25.3/cmake-3.25.3-linux-x86_64.tar.gz
+          sudo tar -C /usr/local --strip-components=1 -xzf cmake.tar.gz
+          cmake --version
 
       - name: Download Chompy Rules
         uses: actions/download-artifact@v4
