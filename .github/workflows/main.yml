@@ -66,9 +66,9 @@ jobs:
           # - name: chatgpt
           #   args: '--mode llm_alphabet_soup'
           - name: handwritten_og_no_cond
-            args: '--mode handwritten --old-recipe-type og_recipe_no_conditions'
+            args: "--mode handwritten --old-recipe-type og_recipe_no_conditions ${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"
           - name: handwritten_og
-            args: '--mode handwritten --old-recipe-type og_recipe'
+            args: "--mode handwritten --old-recipe-type og_recipe ${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"
 
     steps:
       - uses: actions/checkout@v2
@@ -116,7 +116,7 @@ jobs:
            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           cd chompy/
-          cargo run --bin ruler -- handwritten "$CHOMPY_EVALUATION_DIR/chompy/chompy-rules.txt"
+          cargo run --bin ruler -- ${{ matrix.config.args }}
 
       - name: Upload Flamegraph
         uses: actions/upload-artifact@v4
