@@ -63,8 +63,8 @@ jobs:
     strategy:
       matrix:
         config:
-          # - name: chatgpt
-          #   args: '--mode llm_alphabet_soup'
+          - name: chatgpt_soup
+            args: "--mode llm_alphabet_soup --output-path ${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"
           - name: handwritten_og_no_cond
             args: "--mode handwritten --old-recipe-type og_recipe_no_conditions --output-path ${CHOMPY_EVALUATION_DIR}/chompy/chompy-rules.txt"
           - name: handwritten_og
@@ -136,8 +136,7 @@ jobs:
     strategy:
       matrix:
         config:
-          # - name: chatgpt
-          #   args: '--mode llm_alphabet_soup'
+          - name: chatgpt_soup
           - name: handwritten_og_no_cond
           - name: handwritten_og
 
@@ -198,8 +197,7 @@ jobs:
     strategy:
       matrix:
         config:
-          # - name: chatgpt
-          #   args: '--mode llm_alphabet_soup'
+          - name: chatgpt_soup
           - name: handwritten_og_no_cond
           - name: handwritten_og
 
