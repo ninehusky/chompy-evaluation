@@ -55,7 +55,18 @@ jobs:
           name: eval-caviar-no-cond-vs-caviar-summary
           path: ${{ env.CHOMPY_EVALUATION_DIR }}/python/caviarsummary.txt
 
-  evaluation:
+      - name: Generate CSV of non conditional failures
+        run: |
+          cd "$CHOMPY_EVALUATION_DIR/python"
+          python3 scrape_necessary_conditional.py "$CHOMPY_EVALUATION_DIR/eval/chompyvscaviar.json" conditional_required.csv
+        
+      - name: Upload CSV of non conditional failures
+        uses: actions/upload-artifact@v4
+        with:
+          name: non-conditional-failures
+          path: ${{ env.CHOMPY_EVALUATION_DIR }}/python/conditional_required.csv
+
+  rule-generation:
     environment: eval
     runs-on: ubuntu-latest
     env:
@@ -131,14 +142,29 @@ jobs:
           path: ${{ env.CHOMPY_EVALUATION_DIR }}/chompy/chompy-rules.txt
 
   caviar:
-    needs: evaluation
+    needs: [rule-generation, caviar-internal]
     runs-on: ubuntu-latest
     strategy:
       matrix:
         config:
-          - name: chatgpt_soup
-          - name: handwritten_og_no_cond
-          - name: handwritten_og
+          - name: chatgpt_regular
+            ruleset: chatgpt_soup
+            input: "$CHOMPY_EVALUATION_DIR/caviar/data/prefix/evaluation.csv"
+          - name: chatgpt_subset
+            ruleset: chatgpt_soup
+            input: "$CHOMPY_EVALUATION_DIR/python/conditional_required.csv"
+          - name: handwritten_og_no_cond_regular
+            ruleset: handwritten_og_no_cond
+            input: "$CHOMPY_EVALUATION_DIR/caviar/data/prefix/evaluation.csv"
+          - name: handwritten_og_no_cond_subset
+            ruleset: handwritten_og_no_cond
+            input: "$CHOMPY_EVALUATION_DIR/python/conditional_required.csv"
+          - name: handwritten_og_regular
+            ruleset: handwritten_og
+            input: "$CHOMPY_EVALUATION_DIR/caviar/data/prefix/evaluation.csv"
+          - name: handwritten_og_subset
+            ruleset: handwritten_og
+            input: "$CHOMPY_EVALUATION_DIR/python/conditional_required.csv"
 
     env:
       CHOMPY_EVALUATION_DIR: ${{ github.workspace }}
@@ -163,14 +189,20 @@ jobs:
       - name: Download Chompy Rules
         uses: actions/download-artifact@v4
         with:
-          name: chompy-rules-${{ matrix.config.name }}
+          name: chompy-rules-${{ matrix.config.ruleset }}
           path: ${{ env.CHOMPY_EVALUATION_DIR }}
+
+      - name: Download subset CSV
+        uses: actions/download-artifact@v4
+        with:
+          name: non-conditional-failures
+          path: ${{ env.CHOMPY_EVALUATION_DIR }}/python
 
       - name: Run Caviar vs. Chompy comparison
         run: |
           cd "$CHOMPY_EVALUATION_DIR/eval"
           cargo run --release -- --eval-mode caviar \
-            --dataset-path "$CHOMPY_EVALUATION_DIR/caviar/data/prefix/evaluation.csv" \
+            --dataset-path "${{ matrix.config.input }}" \
             --chompy-ruleset-path "$CHOMPY_EVALUATION_DIR/chompy-rules.txt" \
             --ruleset-comparison-output-path chompyvscaviar.json
 
@@ -192,12 +224,12 @@ jobs:
           path: ${{ env.CHOMPY_EVALUATION_DIR }}/python/caviarsummary.txt
 
   derivability:
-    needs: evaluation
+    needs: rule-generation
     runs-on: ubuntu-latest
     strategy:
       matrix:
         config:
-          - name: chatgpt_soup
+          # - name: chatgpt_soup
           - name: handwritten_og_no_cond
           - name: handwritten_og
 
