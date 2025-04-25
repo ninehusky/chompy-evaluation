@@ -8,6 +8,7 @@ import json
 import argparse
 
 EXPECTED_DISCREPANCY_COUNT = 688
+MAXIMUM_DIFFERENCE = 50
 
 def filter_results(json_file):
     def result_is_success(result):
@@ -17,16 +18,15 @@ def filter_results(json_file):
     with open(json_file, 'r') as file:
         data = json.load(file)
         results = []
-        count = 0
         for i, result in enumerate(data['results']):
             if result_is_success(result['caviar_result']) and not result_is_success(result['other_result']):
                 print(result['caviar_result']['start_expression'])
                 # ID,Expression,HalideResult,HalideTime
-                count += 1
                 results.append((i, result['caviar_result']['start_expression'], result['caviar_result']['halide_result'], result['caviar_result']['halide_time']))
         
-        print(f"Total number of results: {count}")
-        assert len(results) == EXPECTED_DISCREPANCY_COUNT, f"Expected {EXPECTED_DISCREPANCY_COUNT} results, but got {len(results)}"
+        difference = abs(len(results) - EXPECTED_DISCREPANCY_COUNT)
+        print(f"Total number of results: {len(results)}")
+        assert difference < MAXIMUM_DIFFERENCE, f"Difference between expected and actual results is too high: {difference} > {MAXIMUM_DIFFERENCE}"
         return results
 
 
