@@ -1,4 +1,6 @@
 from lark import Lark, Transformer, Token
+import argparse
+import re
 
 grammar = r"""
     ?start: expr
@@ -24,6 +26,7 @@ grammar = r"""
          | factor
 
     ?factor: NUMBER                           -> number
+            | "-" factor                      -> neg
            | func_call
            | NAME                             -> var
            | "(" expr ")"                     -> parens
@@ -41,6 +44,10 @@ grammar = r"""
 
 
 class ToSExpr(Transformer):
+    def neg(self, items):
+        return f"(- {items[0]})"
+
+
     def add(self, items):
         return f"(+ {items[0]} {items[1]})"
 
@@ -83,18 +90,33 @@ class ToSExpr(Transformer):
     def args(self, items):
         return items
 
-parser = Lark(grammar, parser="lalr", transformer=ToSExpr())
+if __name__ == "__main__":
+    argparser = argparse.ArgumentParser(description="Convert Halide expressions to S-expressions.")
+    argparser.add_argument("input", type=str, help="Input file containing Halide expressions.")
+    argparser.add_argument("output", type=str, help="Output file for S-expressions.")
 
-# Example expressions
-for expr in [
-    "f(1, 2 + 3)",
-    "add(mul(2, 3), div(4, 2))",
-    "outer(inner1(1), inner2(2, 3), 4)",
-    "!(x == 2 || f(3) > 1) && y < 5"
-]:
-    print(f"Input: {expr}")
-    print("Parsed:", parser.parse(expr))
-    print()
+    args = argparser.parse_args()
+    rules = []
+    with open(args.input, "r") as f:
+        parser = Lark(grammar, parser="lalr", transformer=ToSExpr())
+        delimiters = [" if ", " ==> "]
+        for line in f.readlines():
+            for delim in delimiters:
+                line = line.replace(delim, ";")
+            
+            parts = line.split(";")
+            assert len(parts) == 3, "Expected lhs ==> rhs if cond, got: " + line
 
-expr = "!(x == 2 || f(3) > 1) && y < 5"
-print(parser.parse(expr))
+            lhs, rhs, cond = parts
+
+            parsed_rule = f"{parser.parse(lhs)} ==> {parser.parse(rhs)} if {parser.parse(cond)}"
+            rules.append(parsed_rule)
+    
+    with open(args.output, "w") as f:
+        for rule in rules:
+            f.write(rule + "\n")
+
+
+
+
+
