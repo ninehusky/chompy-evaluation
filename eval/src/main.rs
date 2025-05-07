@@ -13,6 +13,7 @@ enum EvalMode {
     CaviarComparison,
     DerivabilityComparison,
     Eggsplain,
+    PruneHalide,
     Verify,
 }
 
@@ -50,6 +51,9 @@ struct CLIArgs {
 
     #[arg(long, value_name = "FILE")]
     derivability_output_path: Option<PathBuf>,
+
+    #[arg(long)]
+    prune_rules: bool,
 }
 
 #[derive(Debug)]
@@ -97,8 +101,29 @@ fn main() {
             write_chompy_caviar_results_to_json(output_path, &other_ruleset, &results);
         }
         EvalMode::DerivabilityComparison => {
-            let ruleset_path = args.chompy_ruleset_path.unwrap();
-            let against_path = args.other_ruleset_path.unwrap();
+            // returns a file containing the ruleset with the rules that are not pruned.
+            fn prune_rules(path: PathBuf) -> PathBuf {
+                let mut temp_path = path.clone();
+                temp_path.set_extension("tmp");
+                let mut temp_file = std::fs::File::create(temp_path.clone()).unwrap();
+                let ruleset = prune_halide_rules(path.clone());
+                ruleset.to_file(temp_path.to_str().unwrap());
+                temp_path
+            }
+
+            let [ruleset_path, against_path] = if args.prune_rules {
+                let ruleset_path = args.chompy_ruleset_path.unwrap();
+                let against_path = args.other_ruleset_path.unwrap();
+                let pruned_ruleset_path = prune_rules(ruleset_path);
+                let pruned_against_path = prune_rules(against_path);
+                [pruned_ruleset_path, pruned_against_path]
+            } else {
+                [
+                    args.chompy_ruleset_path.unwrap(),
+                    args.other_ruleset_path.unwrap(),
+                ]
+            };
+
             let output_path = args.derivability_output_path.unwrap();
             let first_direction = derivability_check(ruleset_path.clone(), against_path.clone());
             let second_direction = derivability_check(against_path, ruleset_path);
@@ -119,7 +144,100 @@ fn main() {
             let dataset_path = args.dataset_path.unwrap();
             verify_expressions(dataset_path);
         }
+        EvalMode::PruneHalide => {
+            let ruleset_path = args.chompy_ruleset_path.unwrap();
+        }
     }
+}
+
+
+pub fn check_valid_ops(s: &str) -> bool {
+    // an "op" is just the first token that follows a "(" in the string.
+    // split on whitespace
+    let mut tokens = s.split_whitespace();
+    let mut ops = vec![];
+    for t in tokens {
+        if t.starts_with('(') {
+            let op = t[1..].split_whitespace().next().unwrap();
+            ops.push(op);
+        }
+    }
+
+    let allowed_ops = vec![
+        "abs",
+        "<",
+        "<=",
+        ">" ,
+        ">=",
+        "==",
+        "!=",
+        "->",
+        "!",
+        "-",
+        "&&",
+        "||",
+        "^",
+        "+",
+        "-",
+        "*",
+        "/",
+        "\"%\"",
+        "min",
+        "max",
+        "select",
+        "istrue",
+    ];
+
+
+    for op in ops {
+        if !allowed_ops.contains(&op) {
+            println!("Invalid op: {}", op);
+            return false;
+        }
+    }
+    true
+}
+
+fn prune_halide_rules(ruleset_path: PathBuf) -> enumo::Ruleset<Pred> {
+    let lines = std::fs::read_to_string(ruleset_path).unwrap();
+    let mut kept: enumo::Ruleset<Pred> = enumo::Ruleset::default();
+    for r in lines.split('\n') {
+
+
+        if r.is_empty() {
+            continue;
+        }
+
+        if !check_valid_ops(r) {
+            continue;
+        }
+
+
+        let result = Rule::from_string(r);
+        if result.is_ok() {
+            let (fw, bw) = result.unwrap();
+            let mut possible_rules = vec![fw];
+            if let Some(bw) = bw {
+                possible_rules.push(bw);
+            }
+
+            for r in possible_rules {
+                let l_vars = r.lhs.vars();
+                let r_vars = r.rhs.vars();
+
+                if r_vars.iter().any(|v| !l_vars.contains(v)) {
+                    println!("throwing out rule: {}", r);
+                    continue;
+                }
+                kept.add(r);
+            }
+        } else {
+            println!("throwing out rule: {}", r);
+            continue;
+        }
+    }
+
+    kept
 }
 
 fn derivability_check(ruleset_path: PathBuf, against_path: PathBuf) -> DerivabilityResult {

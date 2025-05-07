@@ -89,7 +89,7 @@ class ToSExpr(Transformer):
 
     def args(self, items):
         return items
-
+    
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser(description="Convert Halide expressions to S-expressions.")
     argparser.add_argument("input", type=str, help="Input file containing Halide expressions.")
