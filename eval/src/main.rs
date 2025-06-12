@@ -131,10 +131,14 @@ fn derivability_check(ruleset_path: PathBuf, against_path: PathBuf) -> Derivabil
                 continue;
             }
             let (fw, bw) = Rule::from_string(r).unwrap();
-            result.add(fw);
-            if let Some(bw) = bw {
-                result.add(bw);
+            if !fw.is_valid() {
+                println!("Invalid rule: {}", r);
+                continue;
             }
+            result.add(fw);
+            // if let Some(bw) = bw {
+            //     panic!("why is this showing up here?: {}", bw);
+            // }
         }
         result
     }
@@ -160,11 +164,59 @@ fn derivability_check(ruleset_path: PathBuf, against_path: PathBuf) -> Derivabil
     println!("conditions: {:#?}", conditions.len());
 
     let conditional_prop_rules = ruler::halide::Pred::get_condition_propagation_rules(&cond_wkld);
+
+    for r in conditional_prop_rules.iter() {
+        println!("Rule: {}", r.name);
+    }
+
+
+
+    let mut actual_rules = vec![];
+
+    for r in conditional_prop_rules.iter() {
+        let binding = r.name.to_string();
+        let parts = binding.split("implies").collect::<Vec<_>>();
+        assert_eq!(parts.len(), 2);
+
+        let lhs = parts[0].trim();
+        let rhs = parts[1].trim();
+
+        let vars = |s: &str| -> Vec<String> {
+            // anything that starts with a ? is a variable.
+            let mut vars: Vec<String> = s.replace('(', " ")
+                .replace(')', " ")
+                .split_whitespace()
+                .filter(|s| s.starts_with('?'))
+                .map(|s| s.to_string())
+                .collect();
+            vars.sort();
+            vars.dedup();
+            vars
+        };
+
+        let lhs_vars = vars(lhs);
+        let rhs_vars = vars(rhs);
+
+        // the rhs must be a subset of the lhs
+        let should_add = rhs_vars.iter().all(|v| lhs_vars.contains(v));
+
+        if should_add {
+            actual_rules.push(r.clone());
+        } else {
+            println!(
+                "getting rid of rule: {}, because rhs has variables that are not on lhs",
+                r.name
+            );
+            println!("lhs vars: {:?}", lhs_vars);
+            println!("rhs vars: {:?}", rhs_vars);
+        }
+    }
+
     let (can, cannot) = ruleset.derive(
         ruler::DeriveType::LhsAndRhs,
         &against,
         ruler::Limits::deriving(),
-        Some(conditional_prop_rules.as_ref()),
+        Some(&actual_rules),
     );
 
     let can: Vec<String> = can.into_iter().map(|r| r.0.to_string()).collect();
@@ -357,5 +409,6 @@ fn write_derivability_results_to_json(
         "forwards": to_json(forwards_result),
         "backwards": to_json(backwards_result),
     });
+    println!("writing to {:?}", output_path);
     std::fs::write(output_path, json.to_string()).unwrap();
 }
